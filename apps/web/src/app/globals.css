@@ -1,16 +1,16 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-:root {
-  --bg: #0a0a0f;
-  --surface: #111126;
-  --border: #1e1e3a;
-  --primary: #6366f1;
-  --primary-light: #818cf8;
+@theme {
+  --color-bg: #0a0a0f;
+  --color-surface: #111126;
+  --color-border: #1e1e3a;
+  --color-primary: #6366f1;
+  --color-primary-light: #818cf8;
+  --color-muted: #475569;
+  --color-subtle: #64748b;
 }
 
 body {
-  background-color: var(--bg);
+  background-color: #0a0a0f;
   color: #e2e8f0;
 }
