@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const result = convertCert(certText, targetFormat, keyText, passphrase ?? undefined)
-    return new NextResponse(result.data, {
+    return new NextResponse(new Uint8Array(result.data), {
       headers: {
         'Content-Type': result.mimeType,
         'Content-Disposition': `attachment; filename="${result.filename}"`,

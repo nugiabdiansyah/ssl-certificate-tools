@@ -14,7 +14,7 @@ export interface CsrInfo {
   sans: string[]
 }
 
-function getAttr(csr: forge.pki.CertificationRequest, name: string): string {
+function getAttr(csr: ReturnType<typeof forge.pki.certificationRequestFromPem>, name: string): string {
   const attr = csr.subject.getField(name)
   return attr ? (attr.value as string) : ''
 }
