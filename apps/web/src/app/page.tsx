@@ -10,7 +10,7 @@ const tools = [
 
 export default function Home() {
   return (
-    <div className="max-w-4xl mx-auto px-6 py-16">
+    <div className="max-w-5xl mx-auto px-6 py-16">
       <div className="text-center mb-16">
         <p className="text-xs text-primary-light tracking-widest font-semibold mb-4 uppercase">SSL Certificate Tools</p>
         <h1 className="text-4xl font-extrabold text-slate-200 mb-4">
