@@ -1,0 +1,25 @@
+[package]
+name = "ssl-tools"
+version = "0.1.0"
+edition = "2021"
+description = "SSL certificate utilities CLI"
+license = "MIT"
+
+[[bin]]
+name = "ssl-tools"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+x509-parser = "0.16"
+pem = "3"
+native-tls = "0.2"
+colored = "2"
+anyhow = "1"
+tokio = { version = "1", features = ["full"] }
+openssl = { version = "0.10", features = ["v102", "v110"] }
+
+[dev-dependencies]
+tempfile = "3"
