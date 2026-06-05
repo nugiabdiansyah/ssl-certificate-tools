@@ -13,6 +13,7 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Check SSL certificate for a domain
     Check {
         domain: String,
         #[arg(long, default_value_t = 443)]
@@ -20,22 +21,26 @@ enum Commands {
         #[arg(long)]
         json: bool,
     },
+    /// Decode a CSR file
     DecodeCsr {
         file: String,
         #[arg(long)]
         json: bool,
     },
+    /// Decode a certificate file
     DecodeCert {
         file: String,
         #[arg(long)]
         json: bool,
     },
+    /// Check if a certificate matches a private key
     Match {
         cert_file: String,
         key_file: String,
         #[arg(long)]
         json: bool,
     },
+    /// Convert certificate format (PEM / DER / P7B → PEM / DER / PFX)
     Convert {
         file: String,
         #[arg(long)]
@@ -47,16 +52,87 @@ enum Commands {
         #[arg(short, long)]
         output: Option<String>,
     },
+    /// Build fullchain.pem  (order: key → cert → intermediate → rootca)
+    Bundle {
+        /// Leaf certificate file (.crt / .pem)
+        cert: String,
+        /// Single CA bundle file (intermediate + root in one file)
+        #[arg(long)]
+        bundle: Option<String>,
+        /// Intermediate CA certificate (used when --bundle is not provided)
+        #[arg(long)]
+        intermediate: Option<String>,
+        /// Root CA certificate (used when --bundle is not provided)
+        #[arg(long)]
+        rootca: Option<String>,
+        /// Private key to include in the bundle (optional, e.g. for HAProxy)
+        #[arg(long)]
+        key: Option<String>,
+        /// Output file [default: fullchain.pem]
+        #[arg(short, long)]
+        output: Option<String>,
+    },
+    /// Build a Tomcat PKCS#12 keystore containing the full certificate chain
+    Tomcat {
+        /// Leaf certificate file (.crt / .pem)
+        cert: String,
+        /// Single CA bundle file
+        #[arg(long)]
+        bundle: Option<String>,
+        /// Intermediate CA certificate
+        #[arg(long)]
+        intermediate: Option<String>,
+        /// Root CA certificate
+        #[arg(long)]
+        rootca: Option<String>,
+        /// Private key file (required)
+        #[arg(long)]
+        key: String,
+        /// Keystore password [default: changeit]
+        #[arg(long, default_value = "changeit")]
+        passphrase: String,
+        /// Output file [default: keystore.p12]
+        #[arg(short, long)]
+        output: Option<String>,
+    },
+    /// Encrypt or decrypt a private key passphrase
+    Key {
+        /// Private key file (.key / .pem)
+        file: String,
+        /// Remove passphrase from encrypted key
+        #[arg(long)]
+        decrypt: bool,
+        /// Add passphrase to unencrypted key
+        #[arg(long)]
+        encrypt: bool,
+        /// Current passphrase (for --decrypt) or new passphrase (for --encrypt)
+        #[arg(long, required = true)]
+        passphrase: String,
+        /// Output file [default: private.key or private_encrypted.key]
+        #[arg(short, long)]
+        output: Option<String>,
+    },
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
     let cli = Cli::parse();
     match cli.command {
-        Commands::Check { domain, port, json } => commands::check::run(&domain, port, json).await,
-        Commands::DecodeCsr { file, json } => commands::decode_csr::run(&file, json),
-        Commands::DecodeCert { file, json } => commands::decode_cert::run(&file, json),
-        Commands::Match { cert_file, key_file, json } => commands::match_key::run(&cert_file, &key_file, json),
-        Commands::Convert { file, to, key, passphrase, output } => commands::convert::run(&file, &to, key.as_deref(), passphrase.as_deref(), output.as_deref()),
+        Commands::Check { domain, port, json } =>
+            commands::check::run(&domain, port, json).await,
+        Commands::DecodeCsr { file, json } =>
+            commands::decode_csr::run(&file, json),
+        Commands::DecodeCert { file, json } =>
+            commands::decode_cert::run(&file, json),
+        Commands::Match { cert_file, key_file, json } =>
+            commands::match_key::run(&cert_file, &key_file, json),
+        Commands::Convert { file, to, key, passphrase, output } =>
+            commands::convert::run(&file, &to, key.as_deref(), passphrase.as_deref(), output.as_deref()),
+        Commands::Bundle { cert, bundle, intermediate, rootca, key, output } =>
+            commands::bundle::run(&cert, bundle.as_deref(), intermediate.as_deref(), rootca.as_deref(), key.as_deref(), output.as_deref()),
+        Commands::Tomcat { cert, bundle, intermediate, rootca, key, passphrase, output } =>
+            commands::tomcat::run(&cert, bundle.as_deref(), intermediate.as_deref(), rootca.as_deref(), &key, &passphrase, output.as_deref()),
+        Commands::Key { file, decrypt, encrypt, passphrase, output } =>
+            commands::key_convert::run(&file, decrypt, encrypt, &passphrase, output.as_deref()),
     }
 }

@@ -69,11 +69,40 @@ const commands = [
   },
   {
     title: 'SSL Converter',
-    description: 'Konversi format sertifikat: PEM, DER, PFX/P12.',
+    description: 'Konversi format sertifikat: PEM ↔ DER ↔ PFX, serta baca P7B.',
     examples: [
-      'ssl-tools convert cert.pem --to der -o cert.der',
-      'ssl-tools convert cert.pem --to pfx --key private.key -o bundle.pfx',
-      'ssl-tools convert bundle.pfx --to pem --passphrase secret -o cert.pem',
+      'ssl-tools convert cert.pem --to der',
+      'ssl-tools convert cert.pem --to pfx --key private.key --passphrase secret',
+      'ssl-tools convert bundle.pfx --to pem --passphrase secret',
+      'ssl-tools convert chain.p7b --to pem',
+    ],
+  },
+  {
+    title: 'Build PEM Bundle',
+    description: 'Gabungkan key + cert + CA chain menjadi fullchain.pem (urutan: key → cert → intermediate → rootca).',
+    examples: [
+      'ssl-tools bundle certificate.crt --bundle ca_bundle.crt',
+      'ssl-tools bundle certificate.crt --intermediate int.crt --rootca root.crt',
+      'ssl-tools bundle certificate.crt --bundle ca_bundle.crt --key commercial.key',
+      'ssl-tools bundle certificate.crt --bundle ca_bundle.crt -o /etc/nginx/ssl/fullchain.pem',
+    ],
+  },
+  {
+    title: 'Tomcat Keystore',
+    description: 'Build PKCS#12 keystore berisi full chain — siap dipakai di Tomcat 8.5+.',
+    examples: [
+      'ssl-tools tomcat certificate.crt --key commercial.key --bundle ca_bundle.crt',
+      'ssl-tools tomcat certificate.crt --key commercial.key --bundle ca_bundle.crt --passphrase changeit',
+      'ssl-tools tomcat certificate.crt --key commercial.key --intermediate int.crt --rootca root.crt',
+    ],
+  },
+  {
+    title: 'Private Key Convert',
+    description: 'Hapus passphrase dari encrypted key, atau tambah passphrase ke unencrypted key.',
+    examples: [
+      'ssl-tools key commercial.key --decrypt --passphrase current_pass',
+      'ssl-tools key private.key --encrypt --passphrase new_pass',
+      'ssl-tools key commercial.key --decrypt --passphrase current_pass -o plain.key',
     ],
   },
 ]
@@ -102,10 +131,15 @@ export default function CliPage() {
       <section className="mb-12">
         <h2 className="text-lg font-bold text-slate-200 mb-4">Install via Cargo</h2>
         <div className="bg-surface border border-border rounded-xl p-5">
-          <p className="text-subtle text-sm mb-3">Butuh <a href="https://rustup.rs" target="_blank" rel="noopener noreferrer" className="text-primary-light hover:underline">Rust toolchain</a> terinstall:</p>
+          <p className="text-subtle text-sm mb-3">
+            Butuh <a href="https://rustup.rs" target="_blank" rel="noopener noreferrer" className="text-primary-light hover:underline">Rust toolchain</a> terinstall:
+          </p>
           <pre className="bg-bg border border-border rounded-lg px-4 py-3 text-sm font-mono text-green-400 overflow-x-auto">
             <span className="text-subtle select-none">$ </span>cargo install ssl-tools
           </pre>
+          <p className="text-muted text-xs mt-2">
+            ⚠️ Belum dipublish ke crates.io — gunakan <span className="text-primary-light">Download Binary</span> di bawah untuk sekarang.
+          </p>
         </div>
       </section>
 
@@ -155,8 +189,14 @@ ssl-tools check google.com
 # Decode sertifikat
 ssl-tools decode-cert certificate.crt
 
-# Verifikasi key match
-ssl-tools match cert.pem private.key
+# Build fullchain.pem
+ssl-tools bundle certificate.crt --bundle ca_bundle.crt --key commercial.key
+
+# Build Tomcat keystore
+ssl-tools tomcat certificate.crt --key commercial.key --bundle ca_bundle.crt
+
+# Hapus passphrase dari private key
+ssl-tools key commercial.key --decrypt --passphrase your_passphrase
 
 # Output JSON untuk scripting
 ssl-tools check example.com --json | jq '.validTo'`}</pre>
