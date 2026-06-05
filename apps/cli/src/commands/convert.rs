@@ -1,4 +1,5 @@
 use anyhow::{bail, Context, Result};
+use openssl::nid::Nid;
 use openssl::pkcs12::Pkcs12;
 use openssl::pkcs7::Pkcs7;
 use openssl::pkey::PKey;
@@ -10,6 +11,7 @@ pub fn run(
     to: &str,
     key_file: Option<&str>,
     passphrase: Option<&str>,
+    legacy: bool,
     output_path: Option<&str>,
 ) -> Result<()> {
     let input = std::fs::read(file)
@@ -59,12 +61,14 @@ pub fn run(
             let pass = passphrase.unwrap_or("");
             let key = PKey::private_key_from_pem(&key_pem)
                 .or_else(|_| PKey::private_key_from_pem_passphrase(&key_pem, pass.as_bytes()))?;
-            let p12 = Pkcs12::builder()
-                .name("certificate")
-                .pkey(&key)
-                .cert(&certs[0])
-                .build2(pass)?;
-            p12.to_der()?
+            let mut b = Pkcs12::builder();
+            b.name("certificate").pkey(&key).cert(&certs[0]);
+            if legacy {
+                b.key_algorithm(Nid::PBE_WITHSHA1AND3_KEY_TRIPLEDES_CBC)
+                 .cert_algorithm(Nid::PBE_WITHSHA1AND40BITRC2_CBC)
+                 .mac_iter(2048);
+            }
+            b.build2(pass)?.to_der()?
         }
         _ => bail!("Unsupported target format: '{}'. Choose: pem, der, pfx.", to),
     };

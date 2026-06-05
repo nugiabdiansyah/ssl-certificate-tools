@@ -1,4 +1,5 @@
 use anyhow::{bail, Context, Result};
+use openssl::nid::Nid;
 use openssl::pkcs12::Pkcs12;
 use openssl::pkey::PKey;
 use openssl::stack::Stack;
@@ -11,6 +12,7 @@ pub fn run(
     rootca: Option<&str>,
     key_file: &str,
     passphrase: &str,
+    legacy: bool,
     output: Option<&str>,
 ) -> Result<()> {
     if bundle.is_none() && intermediate.is_none() && rootca.is_none() {
@@ -49,12 +51,15 @@ pub fn run(
     }
 
     // Build PKCS#12 with full chain
-    let p12 = Pkcs12::builder()
-        .name("tomcat")
-        .pkey(&pkey)
-        .cert(&leaf)
-        .ca(ca_stack)
-        .build2(passphrase)
+    let mut b = Pkcs12::builder();
+    b.name("tomcat").pkey(&pkey).cert(&leaf).ca(ca_stack);
+    if legacy {
+        // Use legacy 3DES encryption for compatibility with old Java/Tomcat
+        b.key_algorithm(Nid::PBE_WITHSHA1AND3_KEY_TRIPLEDES_CBC)
+         .cert_algorithm(Nid::PBE_WITHSHA1AND40BITRC2_CBC)
+         .mac_iter(2048);
+    }
+    let p12 = b.build2(passphrase)
         .with_context(|| "Failed to build PKCS#12 keystore")?;
 
     let der = p12.to_der()?;

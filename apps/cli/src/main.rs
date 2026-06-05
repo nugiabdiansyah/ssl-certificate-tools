@@ -49,6 +49,9 @@ enum Commands {
         key: Option<String>,
         #[arg(long)]
         passphrase: Option<String>,
+        /// Use legacy 3DES encryption for PFX output (compatible with old Java / Tomcat / IIS)
+        #[arg(long)]
+        legacy: bool,
         #[arg(short, long)]
         output: Option<String>,
     },
@@ -91,6 +94,9 @@ enum Commands {
         /// Keystore password [default: changeit]
         #[arg(long, default_value = "changeit")]
         passphrase: String,
+        /// Use legacy 3DES encryption (compatible with old Java / Tomcat < 8.5 / JDK < 9)
+        #[arg(long)]
+        legacy: bool,
         /// Output file [default: keystore.p12]
         #[arg(short, long)]
         output: Option<String>,
@@ -126,12 +132,12 @@ async fn main() -> Result<()> {
             commands::decode_cert::run(&file, json),
         Commands::Match { cert_file, key_file, json } =>
             commands::match_key::run(&cert_file, &key_file, json),
-        Commands::Convert { file, to, key, passphrase, output } =>
-            commands::convert::run(&file, &to, key.as_deref(), passphrase.as_deref(), output.as_deref()),
+        Commands::Convert { file, to, key, passphrase, legacy, output } =>
+            commands::convert::run(&file, &to, key.as_deref(), passphrase.as_deref(), legacy, output.as_deref()),
         Commands::Bundle { cert, bundle, intermediate, rootca, key, output } =>
             commands::bundle::run(&cert, bundle.as_deref(), intermediate.as_deref(), rootca.as_deref(), key.as_deref(), output.as_deref()),
-        Commands::Tomcat { cert, bundle, intermediate, rootca, key, passphrase, output } =>
-            commands::tomcat::run(&cert, bundle.as_deref(), intermediate.as_deref(), rootca.as_deref(), &key, &passphrase, output.as_deref()),
+        Commands::Tomcat { cert, bundle, intermediate, rootca, key, passphrase, legacy, output } =>
+            commands::tomcat::run(&cert, bundle.as_deref(), intermediate.as_deref(), rootca.as_deref(), &key, &passphrase, legacy, output.as_deref()),
         Commands::Key { file, decrypt, encrypt, passphrase, output } =>
             commands::key_convert::run(&file, decrypt, encrypt, &passphrase, output.as_deref()),
     }

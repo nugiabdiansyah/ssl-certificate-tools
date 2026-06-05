@@ -296,7 +296,7 @@ function ConvertTab() {
   }
 
   const cliHint = selected
-    ? `ssl-tools convert cert.${selected.from} --to ${selected.to}${selected.needsKey ? ' --key private.key' : ''}${selected.needsInputPassphrase || selected.needsOutputPassphrase ? ' --passphrase <pass>' : ''}`
+    ? `ssl-tools convert cert.${selected.from} --to ${selected.to}${selected.needsKey ? ' --key private.key' : ''}${selected.needsInputPassphrase || selected.needsOutputPassphrase ? ' --passphrase <pass>' : ''}${selected.to === 'pfx' ? ' --legacy' : ''}`
     : 'ssl-tools convert certificate.pem --to der'
 
   return (
@@ -364,6 +364,12 @@ function ConvertTab() {
           {selected.needsOutputPassphrase && (
             <PassphraseField label="Passphrase Output (opsional, untuk PFX)" value={passphrase}
               onChange={setPassphrase} placeholder="Kosongkan untuk PFX tanpa passphrase" />
+          )}
+          {selected.to === 'pfx' && (
+            <p className="text-xs text-muted">
+              <span className="inline-block bg-green-500/10 text-green-400 border border-green-500/20 px-1.5 py-0.5 rounded text-[11px] font-mono mr-1.5">3DES</span>
+              Output PFX menggunakan enkripsi legacy 3DES — kompatibel dengan Java Keytool, Tomcat, IIS, dan server lama.
+            </p>
           )}
           <button onClick={handleConvert} disabled={loading || !certFile || (!!selected.needsKey && !keyFile)}
             className="bg-primary text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-indigo-500 disabled:opacity-50 transition-colors">
@@ -506,7 +512,8 @@ function TomcatTab() {
         <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg px-4 py-3 text-sm text-slate-300 leading-relaxed">
           Generate <code className="text-amber-400 font-mono text-xs">keystore.p12</code> (PKCS#12) berisi
           sertifikat lengkap + private key. Tomcat 8.5+ mendukung PKCS#12 secara native.
-          Untuk Tomcat lama, gunakan perintah <code className="text-amber-400 font-mono text-xs">keytool</code> di bawah untuk konversi ke <code className="text-amber-400 font-mono text-xs">.jks</code>.
+          Untuk Tomcat lama, gunakan perintah <code className="text-amber-400 font-mono text-xs">keytool</code> di bawah untuk konversi ke <code className="text-amber-400 font-mono text-xs">.jks</code>.{' '}
+          <span className="inline-block bg-green-500/10 text-green-400 border border-green-500/20 px-1.5 py-0.5 rounded text-[11px] font-mono">3DES legacy</span>
         </div>
 
         <FileField label="Certificate" hint="certificate.crt"
@@ -607,10 +614,10 @@ function TomcatTab() {
           if (chain.chainMode === 'split') {
             const iPart = chain.intermediateFile ? ` --intermediate ${chain.intermediateFile.name}` : ''
             const rPart = chain.rootcaFile ? ` --rootca ${chain.rootcaFile.name}` : ''
-            return `ssl-tools tomcat ${cert} --key ${key}${iPart}${rPart} --passphrase ${pass}`
+            return `ssl-tools tomcat ${cert} --key ${key}${iPart}${rPart} --passphrase ${pass} --legacy`
           }
           const b = chain.bundleFile?.name ?? 'ca_bundle.crt'
-          return `ssl-tools tomcat ${cert} --key ${key} --bundle ${b} --passphrase ${pass}`
+          return `ssl-tools tomcat ${cert} --key ${key} --bundle ${b} --passphrase ${pass} --legacy`
         })()} />
       </div>
     </>
