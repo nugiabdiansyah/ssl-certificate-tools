@@ -1,6 +1,7 @@
 import tls from 'tls'
 import dns from 'dns'
 import https from 'https'
+import crypto from 'crypto'
 import forge from 'node-forge'
 
 export interface ChainCert {
@@ -15,6 +16,8 @@ export interface ChainCert {
   sans: string[]
   isLeaf: boolean
   isRoot: boolean
+  sha1Fingerprint: string
+  sha256Fingerprint: string
 }
 
 export interface SslResult {
@@ -94,7 +97,16 @@ function traverseChain(root: tls.DetailedPeerCertificate): tls.DetailedPeerCerti
   return chain
 }
 
+function certFingerprints(raw: Buffer): { sha1: string; sha256: string } {
+  const toColon = (b: Buffer) => b.toString('hex').toUpperCase().match(/.{2}/g)!.join(':')
+  return {
+    sha1:   toColon(crypto.createHash('sha1').update(raw).digest()),
+    sha256: toColon(crypto.createHash('sha256').update(raw).digest()),
+  }
+}
+
 function buildChainCert(cert: tls.DetailedPeerCertificate, isLeaf: boolean, isRoot: boolean): ChainCert {
+  const fps = certFingerprints(cert.raw)
   return {
     commonName: s(cert.subject.CN) || s(cert.subject.O) || 'Unknown',
     organization: s(cert.subject.O),
@@ -107,6 +119,8 @@ function buildChainCert(cert: tls.DetailedPeerCertificate, isLeaf: boolean, isRo
     sans: parseSans(cert.subjectaltname),
     isLeaf,
     isRoot,
+    sha1Fingerprint:   fps.sha1,
+    sha256Fingerprint: fps.sha256,
   }
 }
 

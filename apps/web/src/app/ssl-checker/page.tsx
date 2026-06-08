@@ -90,6 +90,8 @@ function ChainCard({ cert, index, total }: { cert: ChainCert; index: number; tot
               <CertRow label="Serial Number" value={cert.serialNumber} />
               <CertRow label="Signature Algorithm" value={cert.signatureAlgorithm} />
               <CertRow label="Issuer" value={cert.issuerCN} />
+              <CertRow label="SHA-1 Fingerprint" value={cert.sha1Fingerprint} />
+              <CertRow label="SHA-256 Fingerprint" value={cert.sha256Fingerprint} />
             </dl>
           </div>
         )}
@@ -124,7 +126,7 @@ export default function SslCheckerPage() {
   }
 
   return (
-    <ToolPageLayout icon="🔍" title="SSL Checker" description="Masukkan domain untuk mengecek status dan detail lengkap sertifikat SSL-nya, termasuk certificate chain.">
+    <ToolPageLayout icon="🔍" title="SSL Checker" description="Enter a domain to check its SSL certificate status, full chain, and details.">
       {/* Input */}
       <div className="bg-surface border border-border rounded-xl p-5 mb-6">
         <label className="text-slate-300 text-sm font-medium block mb-2">Domain</label>

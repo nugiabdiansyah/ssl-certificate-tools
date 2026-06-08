@@ -69,9 +69,12 @@ function toPfxBuffer(
   cert: forge.pki.Certificate,
   key: forge.pki.PrivateKey,
   passphrase: string,
+  legacy = false,
 ): Buffer {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const p12Asn1 = forge.pkcs12.toPkcs12Asn1(key as any, [cert], passphrase, { algorithm: '3des' })
+  const p12Asn1 = forge.pkcs12.toPkcs12Asn1(key as any, [cert], passphrase, {
+    algorithm: legacy ? '3des' : 'aes256',
+  })
   return Buffer.from(forge.asn1.toDer(p12Asn1).getBytes(), 'binary')
 }
 
@@ -95,6 +98,7 @@ export function convertCert(
   toFormat: CertFormat,
   privateKeyPem?: string,
   passphrase?: string,
+  legacy = false,
 ): ConvertResult {
   // Step 1: parse source into certificate(s)
   let certs: forge.pki.Certificate[] = []
@@ -137,7 +141,7 @@ export function convertCert(
     case 'pfx': {
       const key = privateKeyPem ? forge.pki.privateKeyFromPem(privateKeyPem) : pfxKey
       if (!key) throw new Error('Private key is required for PFX/P12 output')
-      const pfx = toPfxBuffer(leaf, key, passphrase ?? '')
+      const pfx = toPfxBuffer(leaf, key, passphrase ?? '', legacy)
       return { data: pfx, filename: 'certificate.pfx', mimeType: 'application/x-pkcs12' }
     }
     default:
@@ -206,6 +210,7 @@ export function buildTomcatKeystore(
   caBundlePem: string,
   privateKeyPem: string,
   passphrase: string,
+  legacy = false,
 ): ConvertResult {
   const leaf = parsePemCert(certPem.trim())
   const chain = parsePemChain(caBundlePem)
@@ -213,7 +218,7 @@ export function buildTomcatKeystore(
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const p12Asn1 = forge.pkcs12.toPkcs12Asn1(key as any, [leaf, ...chain], passphrase, {
-    algorithm: '3des',
+    algorithm: legacy ? '3des' : 'aes256',
     friendlyName: 'tomcat',
   })
   const data = Buffer.from(forge.asn1.toDer(p12Asn1).getBytes(), 'binary')

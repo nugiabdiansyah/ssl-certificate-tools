@@ -180,7 +180,7 @@ function ChainInputs({
             onFile={f => onChange({ rootcaFile: f })}
             inputRef={rootcaRef}
           />
-          <p className="text-muted text-xs">Minimal salah satu diisi. Urutan: intermediate → root.</p>
+          <p className="text-muted text-xs">At least one required. Order: intermediate → root.</p>
         </div>
       )}
     </div>
@@ -234,7 +234,7 @@ export default function SslConverterPage() {
     <ToolPageLayout
       icon="🔄"
       title="SSL Converter"
-      description="Konversi format sertifikat, build PEM bundle dari file CA, atau buat Tomcat keystore."
+      description="Convert certificate formats, build PEM bundles, or generate Tomcat keystores."
     >
       {/* Tab selector */}
       <div className="flex gap-2 mb-6 flex-wrap">
@@ -268,13 +268,14 @@ function ConvertTab() {
   const [certFile, setCertFile] = useState<File | null>(null)
   const [keyFile,  setKeyFile]  = useState<File | null>(null)
   const [passphrase, setPassphrase] = useState('')
+  const [legacy, setLegacy]     = useState(false)
   const [error, setError]   = useState('')
   const [loading, setLoading] = useState(false)
   const certRef = useRef<HTMLInputElement>(null)
   const keyRef  = useRef<HTMLInputElement>(null)
 
   const handleSelect = (c: Conversion) => {
-    setSelected(c); setCertFile(null); setKeyFile(null); setPassphrase(''); setError('')
+    setSelected(c); setCertFile(null); setKeyFile(null); setPassphrase(''); setLegacy(false); setError('')
   }
 
   const handleConvert = async () => {
@@ -287,6 +288,7 @@ function ConvertTab() {
     fd.append('to', selected.to)
     if (keyFile) fd.append('key', keyFile)
     if (passphrase) fd.append('passphrase', passphrase)
+    if (legacy) fd.append('legacy', 'true')
     const res = await fetch('/api/ssl-converter', { method: 'POST', body: fd })
     if (!res.ok) { setError((await res.json()).error ?? 'Failed'); setLoading(false); return }
     const blob = await res.blob()
@@ -296,7 +298,7 @@ function ConvertTab() {
   }
 
   const cliHint = selected
-    ? `ssl-tools convert cert.${selected.from} --to ${selected.to}${selected.needsKey ? ' --key private.key' : ''}${selected.needsInputPassphrase || selected.needsOutputPassphrase ? ' --passphrase <pass>' : ''}${selected.to === 'pfx' ? ' --legacy' : ''}`
+    ? `ssl-tools convert cert.${selected.from} --to ${selected.to}${selected.needsKey ? ' --key private.key' : ''}${selected.needsInputPassphrase || selected.needsOutputPassphrase ? ' --passphrase <pass>' : ''}${selected.to === 'pfx' && legacy ? ' --legacy' : ''}`
     : 'ssl-tools convert certificate.pem --to der'
 
   return (
@@ -313,7 +315,7 @@ function ConvertTab() {
 
       {/* Conversion grid */}
       <div className="bg-surface border border-border rounded-xl p-5 mb-5">
-        <p className="text-subtle text-xs uppercase tracking-wider font-semibold mb-4">Pilih Konversi</p>
+        <p className="text-subtle text-xs uppercase tracking-wider font-semibold mb-4">Select Conversion</p>
         <div className="space-y-4">
           {FORMAT_GROUPS.map(group => (
             <div key={group.from}>
@@ -355,21 +357,28 @@ function ConvertTab() {
             accept={FORMAT_ACCEPT[selected.from]} file={certFile} onFile={setCertFile} inputRef={certRef} />
           {selected.needsInputPassphrase && (
             <PassphraseField label="Passphrase (decrypt PFX)" value={passphrase} onChange={setPassphrase}
-              placeholder="Kosongkan jika tidak ada" />
+              placeholder="Leave blank if none" />
           )}
           {selected.needsKey && (
             <FileField label="Private Key (required)" hint=".key .pem"
               accept=".key,.pem" file={keyFile} onFile={setKeyFile} inputRef={keyRef} />
           )}
           {selected.needsOutputPassphrase && (
-            <PassphraseField label="Passphrase Output (opsional, untuk PFX)" value={passphrase}
-              onChange={setPassphrase} placeholder="Kosongkan untuk PFX tanpa passphrase" />
+            <PassphraseField label="Output Passphrase (optional, for PFX)" value={passphrase}
+              onChange={setPassphrase} placeholder="Leave blank for PFX without passphrase" />
           )}
           {selected.to === 'pfx' && (
-            <p className="text-xs text-muted">
-              <span className="inline-block bg-green-500/10 text-green-400 border border-green-500/20 px-1.5 py-0.5 rounded text-[11px] font-mono mr-1.5">3DES</span>
-              Output PFX menggunakan enkripsi legacy 3DES — kompatibel dengan Java Keytool, Tomcat, IIS, dan server lama.
-            </p>
+            <label className="flex items-start gap-2.5 cursor-pointer select-none">
+              <input type="checkbox" checked={legacy} onChange={e => setLegacy(e.target.checked)}
+                className="mt-0.5 accent-primary" />
+              <span className="text-sm text-slate-300">
+                Legacy Mode (3DES)
+                <span className="block text-xs text-muted mt-0.5">
+                  For legacy servers: Java &lt; 9, Tomcat &lt; 8.5, IIS, or systems that do not support AES-256.
+                  Equivalent to <code className="font-mono text-[11px]">openssl pkcs12 -export -legacy</code>.
+                </span>
+              </span>
+            </label>
           )}
           <button onClick={handleConvert} disabled={loading || !certFile || (!!selected.needsKey && !keyFile)}
             className="bg-primary text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-indigo-500 disabled:opacity-50 transition-colors">
@@ -419,9 +428,9 @@ function BundleTab() {
     <>
       <div className="bg-surface border border-border rounded-xl p-5 space-y-5 mb-5">
         <div className="bg-primary/10 border border-primary/30 rounded-lg px-4 py-3 text-sm text-slate-300 leading-relaxed">
-          Gabungkan <code className="text-primary-light font-mono text-xs">certificate.crt</code> + CA chain
-          menjadi satu file <code className="text-primary-light font-mono text-xs">fullchain.pem</code>.
-          Opsional sertakan private key untuk server seperti HAProxy.
+          Combine <code className="text-primary-light font-mono text-xs">certificate.crt</code> + CA chain
+          into a single <code className="text-primary-light font-mono text-xs">fullchain.pem</code>.
+          Optionally include the private key for servers like HAProxy.
         </div>
 
         <FileField label="Certificate" hint="certificate.crt / domain.crt"
@@ -429,7 +438,7 @@ function BundleTab() {
 
         <ChainInputs state={chain} onChange={patch => setChain(s => ({ ...s, ...patch }))} />
 
-        <FileField label="Private Key (opsional)" hint="commercial.key — hanya jika server butuh key dalam PEM"
+        <FileField label="Private Key (optional)" hint="commercial.key — only if the server needs the key in PEM"
           accept=".key,.pem" file={keyFile} onFile={setKeyFile} inputRef={keyRef} />
 
         <button onClick={handleBuild} disabled={loading || !certFile || !chainReady(chain)}
@@ -440,8 +449,8 @@ function BundleTab() {
 
       {/* Output structure preview */}
       <div className="bg-surface border border-border rounded-xl p-5 mb-5">
-        <p className="text-muted text-xs font-semibold uppercase tracking-wider mb-3">Struktur Output</p>
-        <CodeBlock>{`-----BEGIN RSA PRIVATE KEY-----   ← hanya jika key disertakan
+        <p className="text-muted text-xs font-semibold uppercase tracking-wider mb-3">Output Structure</p>
+        <CodeBlock>{`-----BEGIN RSA PRIVATE KEY-----   ← only if key is provided
 (commercial.key)
 -----END RSA PRIVATE KEY-----
 
@@ -450,11 +459,11 @@ function BundleTab() {
 -----END CERTIFICATE-----
 
 -----BEGIN CERTIFICATE-----
-(${isSplit ? 'intermediateca.crt' : 'intermediate CA dari ca_bundle'})
+(${isSplit ? 'intermediateca.crt' : 'Intermediate CA from ca_bundle'})
 -----END CERTIFICATE-----
 
 -----BEGIN CERTIFICATE-----
-(${isSplit ? 'rootca.crt' : 'root CA dari ca_bundle'})
+(${isSplit ? 'rootca.crt' : 'Root CA from ca_bundle'})
 -----END CERTIFICATE-----`}</CodeBlock>
       </div>
 
@@ -483,6 +492,7 @@ function TomcatTab() {
   })
   const [keyFile,    setKeyFile]    = useState<File | null>(null)
   const [passphrase, setPassphrase] = useState('')
+  const [legacy,     setLegacy]     = useState(false)
   const [error,   setError]   = useState('')
   const [loading, setLoading] = useState(false)
   const [done,    setDone]    = useState(false)
@@ -498,6 +508,7 @@ function TomcatTab() {
     appendChainToFormData(fd, chain)
     fd.append('key', keyFile)
     if (passphrase) fd.append('passphrase', passphrase)
+    if (legacy) fd.append('legacy', 'true')
     const res = await fetch('/api/ssl-converter', { method: 'POST', body: fd })
     if (!res.ok) { setError((await res.json()).error ?? 'Failed'); setLoading(false); return }
     downloadBlob(await res.blob(), 'keystore.p12')
@@ -510,10 +521,8 @@ function TomcatTab() {
     <>
       <div className="bg-surface border border-border rounded-xl p-5 space-y-5 mb-5">
         <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg px-4 py-3 text-sm text-slate-300 leading-relaxed">
-          Generate <code className="text-amber-400 font-mono text-xs">keystore.p12</code> (PKCS#12) berisi
-          sertifikat lengkap + private key. Tomcat 8.5+ mendukung PKCS#12 secara native.
-          Untuk Tomcat lama, gunakan perintah <code className="text-amber-400 font-mono text-xs">keytool</code> di bawah untuk konversi ke <code className="text-amber-400 font-mono text-xs">.jks</code>.{' '}
-          <span className="inline-block bg-green-500/10 text-green-400 border border-green-500/20 px-1.5 py-0.5 rounded text-[11px] font-mono">3DES legacy</span>
+          Generate a <code className="text-amber-400 font-mono text-xs">keystore.p12</code> (PKCS#12) containing the full certificate chain and private key. Tomcat 8.5+ supports PKCS#12 natively.
+          For legacy Tomcat, use the <code className="text-amber-400 font-mono text-xs">keytool</code> command below to convert to <code className="text-amber-400 font-mono text-xs">.jks</code>.
         </div>
 
         <FileField label="Certificate" hint="certificate.crt"
@@ -524,7 +533,19 @@ function TomcatTab() {
         <FileField label="Private Key" hint="commercial.key"
           accept=".key,.pem" file={keyFile} onFile={setKeyFile} inputRef={keyRef} />
         <PassphraseField label="Keystore Password" value={passphrase} onChange={setPassphrase}
-          placeholder='Default: changeit (standar Tomcat)' />
+          placeholder='Default: changeit (Tomcat standard)' />
+
+        <label className="flex items-start gap-2.5 cursor-pointer select-none">
+          <input type="checkbox" checked={legacy} onChange={e => setLegacy(e.target.checked)}
+            className="mt-0.5 accent-primary" />
+          <span className="text-sm text-slate-300">
+            Legacy Mode (3DES)
+            <span className="block text-xs text-muted mt-0.5">
+              For Tomcat &lt; 8.5, JDK &lt; 9, or servers that do not support AES-256.
+              Equivalent to <code className="font-mono text-[11px]">openssl pkcs12 -export -legacy</code>.
+            </span>
+          </span>
+        </label>
 
         <button onClick={handleBuild} disabled={loading || !certFile || !chainReady(chain) || !keyFile}
           className="bg-primary text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-indigo-500 disabled:opacity-50 transition-colors">
@@ -538,7 +559,7 @@ function TomcatTab() {
       <div className={`space-y-4 transition-opacity ${done ? 'opacity-100' : 'opacity-60'}`}>
         {done && (
           <div className="flex items-center gap-2 text-green-400 text-sm font-medium">
-            <span>✓</span> keystore.p12 berhasil di-download. Copy salah satu konfigurasi di bawah.
+            <span>✓</span> keystore.p12 downloaded. Copy one of the configurations below.
           </div>
         )}
 
@@ -551,7 +572,7 @@ function TomcatTab() {
             </div>
           </div>
           <div className="px-5 py-4">
-            <p className="text-muted text-xs mb-3">Edit <code className="font-mono">conf/server.xml</code>, tambahkan/ganti Connector HTTPS:</p>
+            <p className="text-muted text-xs mb-3">Edit <code className="font-mono">conf/server.xml</code>, add or replace the HTTPS Connector:</p>
             <CodeBlock>{`<Connector port="443"
            protocol="org.apache.coyote.http11.Http11NioProtocol"
            SSLEnabled="true"
@@ -570,11 +591,11 @@ function TomcatTab() {
         {/* keytool to JKS */}
         <div className="bg-surface border border-border rounded-xl overflow-hidden">
           <div className="px-5 py-3 border-b border-border">
-            <span className="text-slate-200 text-sm font-semibold">Convert ke JKS</span>
-            <span className="ml-2 text-xs text-muted bg-border px-1.5 py-0.5 rounded">Legacy · perlu Java keytool</span>
+            <span className="text-slate-200 text-sm font-semibold">Convert to JKS</span>
+            <span className="ml-2 text-xs text-muted bg-border px-1.5 py-0.5 rounded">Legacy · requires Java keytool</span>
           </div>
           <div className="px-5 py-4">
-            <p className="text-muted text-xs mb-3">Jalankan di server (butuh Java terinstall):</p>
+            <p className="text-muted text-xs mb-3">Run on server (requires Java installed):</p>
             <CodeBlock>{`keytool -importkeystore \\
   -srckeystore  keystore.p12 \\
   -srcstoretype  PKCS12 \\
@@ -614,10 +635,10 @@ function TomcatTab() {
           if (chain.chainMode === 'split') {
             const iPart = chain.intermediateFile ? ` --intermediate ${chain.intermediateFile.name}` : ''
             const rPart = chain.rootcaFile ? ` --rootca ${chain.rootcaFile.name}` : ''
-            return `ssl-tools tomcat ${cert} --key ${key}${iPart}${rPart} --passphrase ${pass} --legacy`
+            return `ssl-tools tomcat ${cert} --key ${key}${iPart}${rPart} --passphrase ${pass}${legacy ? ' --legacy' : ''}`
           }
           const b = chain.bundleFile?.name ?? 'ca_bundle.crt'
-          return `ssl-tools tomcat ${cert} --key ${key} --bundle ${b} --passphrase ${pass} --legacy`
+          return `ssl-tools tomcat ${cert} --key ${key} --bundle ${b} --passphrase ${pass}${legacy ? ' --legacy' : ''}`
         })()} />
       </div>
     </>
@@ -660,17 +681,17 @@ function KeyTab() {
     <>
       <div className="bg-surface border border-border rounded-xl p-5 space-y-5 mb-5">
         <div className="bg-primary/10 border border-primary/30 rounded-lg px-4 py-3 text-sm text-slate-300 leading-relaxed">
-          Hapus passphrase dari <code className="text-primary-light font-mono text-xs">commercial.key</code> yang
-          ter-encrypt (decrypt), atau tambahkan passphrase ke private key yang plain (encrypt).
+          Remove the passphrase from an encrypted <code className="text-primary-light font-mono text-xs">commercial.key</code> (decrypt),
+          or add a passphrase to a plain private key (encrypt).
         </div>
 
         {/* Action toggle */}
         <div>
-          <label className="text-slate-300 text-sm font-medium block mb-2">Operasi</label>
+          <label className="text-slate-300 text-sm font-medium block mb-2">Operation</label>
           <div className="inline-flex rounded-lg border border-border overflow-hidden text-sm">
             {([
-              { id: 'decrypt', label: '🔓 Hapus Passphrase' },
-              { id: 'encrypt', label: '🔒 Tambah Passphrase' },
+              { id: 'decrypt', label: '🔓 Remove Passphrase' },
+              { id: 'encrypt', label: '🔒 Add Passphrase' },
             ] as { id: KeyAction; label: string }[]).map((opt, i) => (
               <button
                 key={opt.id}
@@ -698,10 +719,10 @@ function KeyTab() {
         />
 
         <PassphraseField
-          label={action === 'decrypt' ? 'Passphrase Saat Ini' : 'Passphrase Baru'}
+          label={action === 'decrypt' ? 'Current Passphrase' : 'New Passphrase'}
           value={passphrase}
           onChange={setPassphrase}
-          placeholder={action === 'decrypt' ? 'Masukkan passphrase key saat ini' : 'Passphrase baru untuk key'}
+          placeholder={action === 'decrypt' ? 'Enter the current key passphrase' : 'New passphrase for the key'}
         />
 
         <button

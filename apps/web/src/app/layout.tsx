@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 }
 
 // Runs before React hydrates to prevent flash of wrong theme
-const antiFlashScript = `(function(){try{var t=localStorage.getItem('ssl-tools-theme')||'dark';document.documentElement.classList.add(t);}catch(e){document.documentElement.classList.add('dark');}})();`
+const antiFlashScript = `(function(){try{var t=localStorage.getItem('ssl-tools-theme')||'light';document.documentElement.classList.add(t);}catch(e){document.documentElement.classList.add('light');}})();`
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

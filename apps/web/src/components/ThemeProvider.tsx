@@ -15,11 +15,11 @@ export function useTheme() {
 }
 
 export default function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('dark')
+  const [theme, setTheme] = useState<Theme>('light')
 
   useEffect(() => {
     const saved = localStorage.getItem('ssl-tools-theme') as Theme | null
-    const initial: Theme = saved === 'light' ? 'light' : 'dark'
+    const initial: Theme = saved === 'dark' ? 'dark' : 'light'
     setTheme(initial)
     applyClass(initial)
   }, [])

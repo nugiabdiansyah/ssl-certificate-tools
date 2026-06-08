@@ -57,6 +57,7 @@ export async function POST(req: NextRequest) {
       const rootcaFile       = formData.get('rootca')       as File | null
       const keyFile          = formData.get('key')          as File | null
       const passphrase       = (formData.get('passphrase') as string) ?? ''
+      const legacy           = formData.get('legacy') === 'true'
 
       if (!certFile) return NextResponse.json({ error: 'Certificate file is required' }, { status: 400 })
       if (!keyFile)  return NextResponse.json({ error: 'Private key file is required' }, { status: 400 })
@@ -69,6 +70,7 @@ export async function POST(req: NextRequest) {
         caBundleText,
         await keyFile.text(),
         passphrase,
+        legacy,
       )
       return new NextResponse(new Uint8Array(result.data), {
         headers: {
@@ -102,6 +104,7 @@ export async function POST(req: NextRequest) {
     const from       = formData.get('from') as CertFormat
     const to         = formData.get('to')   as CertFormat
     const passphrase = formData.get('passphrase') as string | null
+    const legacy     = formData.get('legacy') === 'true'
 
     if (!certFile) return NextResponse.json({ error: 'Certificate file is required' }, { status: 400 })
     if (!VALID_FORMATS.includes(from)) return NextResponse.json({ error: 'Invalid source format' }, { status: 400 })
@@ -118,6 +121,7 @@ export async function POST(req: NextRequest) {
       to,
       keyFile ? await keyFile.text() : undefined,
       passphrase ?? undefined,
+      legacy,
     )
     return new NextResponse(new Uint8Array(result.data), {
       headers: {

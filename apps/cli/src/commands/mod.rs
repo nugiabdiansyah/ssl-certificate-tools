@@ -6,3 +6,4 @@ pub mod convert;
 pub mod bundle;
 pub mod tomcat;
 pub mod key_convert;
+pub mod fingerprint;

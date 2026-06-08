@@ -101,6 +101,19 @@ enum Commands {
         #[arg(short, long)]
         output: Option<String>,
     },
+    /// Get SHA-1, SHA-256, and Proxmox/PBS format fingerprint from a live endpoint
+    Fingerprint {
+        /// Host or IP to connect to
+        host: String,
+        /// Port [default: 443]
+        #[arg(long, default_value_t = 443)]
+        port: u16,
+        /// Show PBS config snippets
+        #[arg(long)]
+        pbs: bool,
+        #[arg(long)]
+        json: bool,
+    },
     /// Encrypt or decrypt a private key passphrase
     Key {
         /// Private key file (.key / .pem)
@@ -138,6 +151,8 @@ async fn main() -> Result<()> {
             commands::bundle::run(&cert, bundle.as_deref(), intermediate.as_deref(), rootca.as_deref(), key.as_deref(), output.as_deref()),
         Commands::Tomcat { cert, bundle, intermediate, rootca, key, passphrase, legacy, output } =>
             commands::tomcat::run(&cert, bundle.as_deref(), intermediate.as_deref(), rootca.as_deref(), &key, &passphrase, legacy, output.as_deref()),
+        Commands::Fingerprint { host, port, pbs, json } =>
+            commands::fingerprint::run(&host, port, pbs, json).await,
         Commands::Key { file, decrypt, encrypt, passphrase, output } =>
             commands::key_convert::run(&file, decrypt, encrypt, &passphrase, output.as_deref()),
     }

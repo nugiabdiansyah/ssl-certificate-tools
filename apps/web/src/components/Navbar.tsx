@@ -10,6 +10,7 @@ export default function Navbar() {
       </Link>
       <div className="flex items-center gap-5">
         <Link href="/#tools" className="text-subtle text-sm hover:text-slate-300 transition-colors">Tools</Link>
+        <Link href="/fingerprint" className="text-subtle text-sm hover:text-slate-300 transition-colors">Fingerprint</Link>
         <Link href="/cli" className="text-subtle text-sm hover:text-slate-300 transition-colors">CLI</Link>
         <ThemeToggle />
         <a

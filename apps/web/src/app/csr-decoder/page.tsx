@@ -33,7 +33,7 @@ export default function CsrDecoderPage() {
   }
 
   return (
-    <ToolPageLayout icon="📄" title="CSR Decoder" description="Paste atau upload CSR untuk melihat informasi di dalamnya.">
+    <ToolPageLayout icon="📄" title="CSR Decoder" description="Paste or upload a CSR to inspect its fields.">
       <div className="bg-surface border border-border rounded-xl p-5">
         <FileUploadArea value={pem} onChange={setPem} placeholder="-----BEGIN CERTIFICATE REQUEST-----&#10;...&#10;-----END CERTIFICATE REQUEST-----" label="CSR (PEM)" accept=".csr,.pem,.txt" />
         <button onClick={handleDecode} disabled={loading || !pem.trim()}

@@ -1,9 +1,31 @@
 use anyhow::{Context, Result};
 use ::pem::parse;
+use openssl::hash::{hash, MessageDigest};
 use serde::Serialize;
 use x509_parser::prelude::*;
 use x509_parser::oid_registry::{OID_X509_COMMON_NAME, OID_X509_ORGANIZATION_NAME};
 use crate::output;
+
+const PK_OID_RSA:     &str = "1.2.840.113549.1.1.1";
+const PK_OID_EC:      &str = "1.2.840.10045.2.1";
+const PK_OID_ED25519: &str = "1.3.101.112";
+const PK_OID_ED448:   &str = "1.3.101.113";
+const PK_OID_X25519:  &str = "1.3.101.110";
+
+fn public_key_label(oid: &str) -> &str {
+    match oid {
+        PK_OID_RSA     => "RSA",
+        PK_OID_EC      => "EC (ECDSA)",
+        PK_OID_ED25519 => "Ed25519",
+        PK_OID_ED448   => "Ed448",
+        PK_OID_X25519  => "X25519",
+        other          => other,
+    }
+}
+
+fn to_colon_hex(bytes: &[u8]) -> String {
+    bytes.iter().map(|b| format!("{:02X}", b)).collect::<Vec<_>>().join(":")
+}
 
 #[derive(Serialize)]
 pub struct CertInfo {
@@ -16,6 +38,8 @@ pub struct CertInfo {
     pub days_remaining: i64,
     pub public_key_algorithm: String,
     pub signature_algorithm: String,
+    pub sha1_fingerprint: String,
+    pub sha256_fingerprint: String,
     pub sans: Vec<String>,
 }
 
@@ -68,6 +92,11 @@ pub fn run(file: &str, json: bool) -> Result<()> {
         .unwrap_or("")
         .to_string();
 
+    let pk_oid = cert.public_key().algorithm.algorithm.to_id_string();
+
+    let sha1   = hash(MessageDigest::sha1(), &der)?;
+    let sha256 = hash(MessageDigest::sha256(), &der)?;
+
     let info = CertInfo {
         common_name,
         organization,
@@ -76,8 +105,10 @@ pub fn run(file: &str, json: bool) -> Result<()> {
         valid_from: cert.validity().not_before.to_rfc2822().unwrap_or_default(),
         valid_to: cert.validity().not_after.to_rfc2822().unwrap_or_default(),
         days_remaining,
-        public_key_algorithm: cert.public_key().algorithm.algorithm.to_id_string(),
+        public_key_algorithm: public_key_label(&pk_oid).to_string(),
         signature_algorithm: cert.signature_algorithm.algorithm.to_id_string(),
+        sha1_fingerprint:   to_colon_hex(&sha1),
+        sha256_fingerprint: to_colon_hex(&sha256),
         sans,
     };
 
@@ -89,14 +120,16 @@ pub fn run(file: &str, json: bool) -> Result<()> {
         } else {
             output::print_status_err(&format!("Expired {} days ago", days_remaining.abs()));
         }
-        output::print_field("Common Name", &info.common_name);
-        output::print_field("Organization", &info.organization);
-        output::print_field("Issuer", &info.issuer);
-        output::print_field("Serial", &info.serial_number);
-        output::print_field("Valid From", &info.valid_from);
-        output::print_field("Valid To", &info.valid_to);
-        output::print_field("Public Key", &info.public_key_algorithm);
-        output::print_list("SANs", &info.sans);
+        output::print_field("Common Name",    &info.common_name);
+        output::print_field("Organization",   &info.organization);
+        output::print_field("Issuer",         &info.issuer);
+        output::print_field("Serial",         &info.serial_number);
+        output::print_field("Valid From",     &info.valid_from);
+        output::print_field("Valid To",       &info.valid_to);
+        output::print_field("Public Key",     &info.public_key_algorithm);
+        output::print_field("SHA-1",          &info.sha1_fingerprint);
+        output::print_field("SHA-256",        &info.sha256_fingerprint);
+        output::print_list("SANs",            &info.sans);
     }
     Ok(())
 }

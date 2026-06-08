@@ -21,7 +21,7 @@ export default function KeyMatcherPage() {
   }
 
   return (
-    <ToolPageLayout icon="🔑" title="Certificate Key Matcher" description="Verifikasi apakah private key cocok dengan sertifikat.">
+    <ToolPageLayout icon="🔑" title="Certificate Key Matcher" description="Verify whether a private key matches a certificate.">
       <div className="bg-surface border border-border rounded-xl p-5 space-y-5">
         <FileUploadArea value={cert} onChange={setCert} placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----" label="Certificate (PEM)" />
         <FileUploadArea value={key} onChange={setKey} placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----" label="Private Key (PEM)" accept=".key,.pem,.txt" />

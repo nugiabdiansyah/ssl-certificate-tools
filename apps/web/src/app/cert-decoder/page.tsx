@@ -41,7 +41,7 @@ export default function CertDecoderPage() {
   }
 
   return (
-    <ToolPageLayout icon="🔐" title="Certificate Decoder" description="Paste atau upload sertifikat X.509 (PEM/DER) untuk melihat semua informasinya.">
+    <ToolPageLayout icon="🔐" title="Certificate Decoder" description="Paste or upload an X.509 certificate (PEM/DER) to inspect all its fields.">
       <div className="bg-surface border border-border rounded-xl p-5">
         <FileUploadArea value={pem} onChange={setPem} placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----" label="Certificate (PEM atau DER base64)" />
         <button onClick={handleDecode} disabled={loading || !pem.trim()}
