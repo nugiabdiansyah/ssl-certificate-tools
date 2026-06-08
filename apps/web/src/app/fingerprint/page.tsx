@@ -63,8 +63,8 @@ function ResultCard({ r }: { r: FingerprintResult }) {
 
         {/* Fingerprints */}
         <dl className="space-y-0">
-          <FpRow label="SHA-1" value={r.sha1} />
-          <FpRow label="SHA-256" value={r.sha256} />
+          <FpRow label="Fingerprint SHA-1" value={r.sha1} />
+          <FpRow label="Fingerprint SHA-256" value={r.sha256} />
           <FpRow label="Proxmox / PBS Format" value={r.proxmox} highlight />
         </dl>
       </div>

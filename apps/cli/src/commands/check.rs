@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use native_tls::TlsConnector;
+use openssl::hash::{hash, MessageDigest};
 use serde::Serialize;
 use std::net::TcpStream;
 use x509_parser::prelude::*;
@@ -7,6 +8,10 @@ use x509_parser::oid_registry::{
     OID_X509_COMMON_NAME, OID_X509_ORGANIZATION_NAME,
 };
 use crate::output;
+
+fn to_colon_hex(bytes: &[u8]) -> String {
+    bytes.iter().map(|b| format!("{:02X}", b)).collect::<Vec<_>>().join(":")
+}
 
 #[derive(Serialize)]
 pub struct SslCheckResult {
@@ -17,6 +22,8 @@ pub struct SslCheckResult {
     pub valid_from: String,
     pub valid_to: String,
     pub protocol: String,
+    pub sha1_fingerprint: String,
+    pub sha256_fingerprint: String,
     pub sans: Vec<String>,
 }
 
@@ -74,6 +81,9 @@ pub async fn run(domain: &str, port: u16, json: bool) -> Result<()> {
         .unwrap_or("")
         .to_string();
 
+    let sha1_raw   = hash(MessageDigest::sha1(), &der)?;
+    let sha256_raw = hash(MessageDigest::sha256(), &der)?;
+
     let result = SslCheckResult {
         status: if days_remaining >= 0 { "valid".into() } else { "expired".into() },
         days_remaining,
@@ -82,6 +92,8 @@ pub async fn run(domain: &str, port: u16, json: bool) -> Result<()> {
         valid_from: parsed.validity().not_before.to_rfc2822().unwrap_or_default(),
         valid_to: parsed.validity().not_after.to_rfc2822().unwrap_or_default(),
         protocol: "TLS".to_string(),
+        sha1_fingerprint:   to_colon_hex(&sha1_raw),
+        sha256_fingerprint: to_colon_hex(&sha256_raw),
         sans,
     };
 
@@ -93,12 +105,14 @@ pub async fn run(domain: &str, port: u16, json: bool) -> Result<()> {
         } else {
             output::print_status_err(&format!("Expired {} days ago", result.days_remaining.abs()));
         }
-        output::print_field("Issued To", &result.issued_to);
-        output::print_field("Issuer", &result.issuer);
-        output::print_field("Valid From", &result.valid_from);
-        output::print_field("Valid To", &result.valid_to);
-        output::print_field("Protocol", &result.protocol);
-        output::print_list("SANs", &result.sans);
+        output::print_field("Issued To",         &result.issued_to);
+        output::print_field("Issuer",            &result.issuer);
+        output::print_field("Valid From",        &result.valid_from);
+        output::print_field("Valid To",          &result.valid_to);
+        output::print_field("Protocol",          &result.protocol);
+        output::print_field("Fingerprint SHA-1",   &result.sha1_fingerprint);
+        output::print_field("Fingerprint SHA-256", &result.sha256_fingerprint);
+        output::print_list("SANs",               &result.sans);
     }
 
     Ok(())

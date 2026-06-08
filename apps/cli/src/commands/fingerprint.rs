@@ -84,9 +84,9 @@ pub async fn run(host: &str, port: u16, pbs: bool, json: bool) -> Result<()> {
     // Human-readable output
     crate::output::print_status_ok(&format!("{} ({}:{})", result.common_name, host, port));
     println!();
-    crate::output::print_field("Issuer",  &result.issuer);
-    crate::output::print_field("SHA-1",   &result.sha1);
-    crate::output::print_field("SHA-256", &result.sha256);
+    crate::output::print_field("Issuer",             &result.issuer);
+    crate::output::print_field("Fingerprint SHA-1",   &result.sha1);
+    crate::output::print_field("Fingerprint SHA-256", &result.sha256);
     println!();
 
     use colored::Colorize;

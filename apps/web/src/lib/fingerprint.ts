@@ -1,6 +1,5 @@
 import tls from 'tls'
 import crypto from 'crypto'
-import forge from 'node-forge'
 
 export interface FingerprintResult {
   commonName: string
@@ -26,30 +25,44 @@ export function computeFingerprints(der: Buffer): { sha1: string; sha256: string
   return { sha1, sha256, proxmox: `sha256:${sha256}` }
 }
 
-function derToResult(der: Buffer, source: FingerprintResult['source']): FingerprintResult {
-  const fps = computeFingerprints(der)
+// Parse "CN=foo\nO=bar\nC=US" or "CN=foo, O=bar" into a key-value map
+function parseDN(dn: string): Record<string, string> {
+  const result: Record<string, string> = {}
+  for (const part of dn.split(/[\n,]/)) {
+    const eq = part.indexOf('=')
+    if (eq > 0) result[part.slice(0, eq).trim()] = part.slice(eq + 1).trim()
+  }
+  return result
+}
 
-  const asn1 = forge.asn1.fromDer(der.toString('binary'))
-  const cert = forge.pki.certificateFromAsn1(asn1)
-
-  const attr = (obj: forge.pki.Certificate['subject'], name: string): string =>
-    (obj.getField(name)?.value as string) || ''
-
-  const now = Date.now()
-  const validTo = cert.validity.notAfter.getTime()
-  const daysRemaining = Math.floor((validTo - now) / 86400000)
+function x509ToResult(
+  x509: crypto.X509Certificate,
+  der: Buffer,
+  source: FingerprintResult['source'],
+): FingerprintResult {
+  const fps     = computeFingerprints(der)
+  const subject = parseDN(x509.subject)
+  const issuer  = parseDN(x509.issuer)
+  const validTo = new Date(x509.validTo)
+  const daysRemaining = Math.floor((validTo.getTime() - Date.now()) / 86400000)
 
   return {
-    commonName:   attr(cert.subject, 'CN'),
-    organization: attr(cert.subject, 'O'),
-    issuer:       attr(cert.issuer, 'CN') || attr(cert.issuer, 'O'),
-    validFrom:    cert.validity.notBefore.toISOString(),
-    validTo:      cert.validity.notAfter.toISOString(),
+    commonName:   subject['CN'] || '',
+    organization: subject['O']  || '',
+    issuer:       issuer['CN']  || issuer['O'] || '',
+    validFrom:    new Date(x509.validFrom).toISOString(),
+    validTo:      validTo.toISOString(),
     daysRemaining,
-    serialNumber: cert.serialNumber,
+    serialNumber: x509.serialNumber,
     source,
     ...fps,
   }
+}
+
+// crypto.X509Certificate supports RSA, EC (ECDSA), Ed25519, etc.
+function derToResult(der: Buffer, source: FingerprintResult['source']): FingerprintResult {
+  const x509 = new crypto.X509Certificate(der)
+  return x509ToResult(x509, der, source)
 }
 
 export async function fetchCertFingerprint(host: string, port: number): Promise<FingerprintResult> {
@@ -71,16 +84,12 @@ export async function fetchCertFingerprint(host: string, port: number): Promise<
 
 export function parseCertFingerprint(fileBuffer: Buffer): FingerprintResult {
   const str = fileBuffer.toString('utf8')
-  let der: Buffer
-
   if (str.includes('-----BEGIN CERTIFICATE-----')) {
-    const match = str.match(/-----BEGIN CERTIFICATE-----[\s\S]+?-----END CERTIFICATE-----/)
-    if (!match) throw new Error('No certificate block found in file')
-    const forgeCert = forge.pki.certificateFromPem(match[0])
-    der = Buffer.from(forge.asn1.toDer(forge.pki.certificateToAsn1(forgeCert)).getBytes(), 'binary')
-  } else {
-    der = fileBuffer
+    // Pass PEM string — X509Certificate handles RSA and EC keys alike
+    const x509 = new crypto.X509Certificate(str)
+    const der  = Buffer.from(x509.raw)
+    return x509ToResult(x509, der, 'file')
   }
-
-  return derToResult(der, 'file')
+  // Assume DER
+  return derToResult(fileBuffer, 'file')
 }

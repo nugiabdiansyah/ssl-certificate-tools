@@ -33,8 +33,8 @@ export default function CertDecoderPage() {
         'Signature Algorithm': data.signatureAlgorithm,
         'SANs': data.sans,
         'Key Usage': data.keyUsage,
-        'SHA-1 Fingerprint': data.fingerprintSha1,
-        'SHA-256 Fingerprint': data.fingerprintSha256,
+        'Fingerprint SHA-1': data.fingerprintSha1,
+        'Fingerprint SHA-256': data.fingerprintSha256,
       })
     }
     setLoading(false)

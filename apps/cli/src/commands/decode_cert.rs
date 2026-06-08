@@ -127,8 +127,8 @@ pub fn run(file: &str, json: bool) -> Result<()> {
         output::print_field("Valid From",     &info.valid_from);
         output::print_field("Valid To",       &info.valid_to);
         output::print_field("Public Key",     &info.public_key_algorithm);
-        output::print_field("SHA-1",          &info.sha1_fingerprint);
-        output::print_field("SHA-256",        &info.sha256_fingerprint);
+        output::print_field("Fingerprint SHA-1",   &info.sha1_fingerprint);
+        output::print_field("Fingerprint SHA-256", &info.sha256_fingerprint);
         output::print_list("SANs",            &info.sans);
     }
     Ok(())

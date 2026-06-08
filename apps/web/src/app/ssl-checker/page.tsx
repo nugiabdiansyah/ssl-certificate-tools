@@ -90,8 +90,8 @@ function ChainCard({ cert, index, total }: { cert: ChainCert; index: number; tot
               <CertRow label="Serial Number" value={cert.serialNumber} />
               <CertRow label="Signature Algorithm" value={cert.signatureAlgorithm} />
               <CertRow label="Issuer" value={cert.issuerCN} />
-              <CertRow label="SHA-1 Fingerprint" value={cert.sha1Fingerprint} />
-              <CertRow label="SHA-256 Fingerprint" value={cert.sha256Fingerprint} />
+              <CertRow label="Fingerprint SHA-1" value={cert.sha1Fingerprint} />
+              <CertRow label="Fingerprint SHA-256" value={cert.sha256Fingerprint} />
             </dl>
           </div>
         )}
