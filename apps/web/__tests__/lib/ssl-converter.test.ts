@@ -9,12 +9,12 @@ describe('detectFormat', () => {
 
 describe('convertCert', () => {
   it('converts PEM to DER (returns Buffer)', () => {
-    const result = convertCert(fixtures.certPem, 'der')
+    const result = convertCert(fixtures.certPem, 'pem', 'der')
     expect(result.data).toBeInstanceOf(Buffer)
     expect(result.filename).toMatch(/\.der$/)
   })
   it('converts PEM to PEM (round-trip)', () => {
-    const result = convertCert(fixtures.certPem, 'pem')
+    const result = convertCert(fixtures.certPem, 'pem', 'pem')
     expect(result.data.toString()).toContain('BEGIN CERTIFICATE')
   })
 })

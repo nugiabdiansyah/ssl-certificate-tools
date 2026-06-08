@@ -80,6 +80,14 @@ function toPfxBuffer(
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
+/** Detect cert format from content. */
+export function detectFormat(data: string | Buffer): CertFormat {
+  const str = typeof data === 'string' ? data : data.toString('utf8')
+  if (str.includes('-----BEGIN PKCS7') || str.includes('-----BEGIN PKCS #7')) return 'p7b'
+  if (str.includes('-----BEGIN')) return 'pem'
+  return 'der'
+}
+
 /** Parse multiple PEM certs from a bundle/chain string. */
 export function parsePemChain(pemChain: string): forge.pki.Certificate[] {
   const certs: forge.pki.Certificate[] = []
