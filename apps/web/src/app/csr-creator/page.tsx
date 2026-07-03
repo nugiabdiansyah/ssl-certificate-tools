@@ -31,6 +31,12 @@ function downloadText(filename: string, text: string) {
   URL.revokeObjectURL(a.href)
 }
 
+function shellArg(value: string) {
+  return /^[A-Za-z0-9_./:@%+=,-]+$/.test(value)
+    ? value
+    : `'${value.replaceAll("'", "'\\''")}'`
+}
+
 function OutputBlock({ title, filename, value }: { title: string; filename: string; value: string }) {
   return (
     <div className="bg-surface border border-border rounded-xl overflow-hidden">
@@ -96,6 +102,42 @@ export default function CsrCreatorPage() {
   }
 
   const needsPassword = encryptPrivateKey || mode === 'existing-key'
+  const cliCommand = (() => {
+    const args = ['ssl-tools', 'create-csr', '--cn', shellArg(commonName.trim() || 'example.com')]
+
+    if (mode === 'generate-key') {
+      args.push('--key-algorithm', keyAlgorithm)
+      if (encryptPrivateKey) {
+        args.push('--encrypt-key', '--passphrase', '<passphrase>')
+      }
+    } else {
+      args.push('--key', 'private.key')
+      if (privateKeyPassword) {
+        args.push('--passphrase', '<passphrase>')
+      }
+    }
+
+    sans
+      .split(/[\n,]+/)
+      .map(value => value.trim())
+      .filter(Boolean)
+      .forEach(value => args.push('--san', shellArg(value)))
+
+    const optionalArgs: [string, string][] = [
+      ['--organization', organization],
+      ['--organizational-unit', organizationalUnit],
+      ['--country', country],
+      ['--state', stateName],
+      ['--locality', locality],
+      ['--email', email],
+    ]
+    optionalArgs
+      .map(([flag, value]) => [flag, value.trim()] as [string, string])
+      .filter(([, value]) => value)
+      .forEach(([flag, value]) => args.push(flag, shellArg(value)))
+
+    return args.join(' ')
+  })()
 
   return (
     <ToolPageLayout icon="🧾" title="CSR Creator" description="Create a CSR with a new private key or an uploaded private key.">
@@ -249,7 +291,7 @@ export default function CsrCreatorPage() {
         </div>
       )}
 
-      <CliHint command="openssl req -new -newkey ec -pkeyopt ec_paramgen_curve:secp384r1 -nodes -keyout private.key -out certificate.csr" />
+      <CliHint command={cliCommand} />
     </ToolPageLayout>
   )
 }

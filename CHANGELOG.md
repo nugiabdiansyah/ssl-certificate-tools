@@ -17,7 +17,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **CLI release workflow** — manual `workflow_dispatch` release support with a version input, while keeping tag-based `v*` releases.
 
 ### Changed
-- **CLI version** bumped to `1.0.4`.
+- **CLI version** bumped to `1.0.5`.
 - **CLI `decode-csr` and `decode-cert`** now include `Domain Type` (`Wildcard`, `Single Domain`, `Multi Domain`, `Unknown`).
 
 ---

@@ -124,6 +124,11 @@ function buildChainCert(cert: tls.DetailedPeerCertificate, isLeaf: boolean, isRo
   }
 }
 
+function certificateKeyAlgorithm(cert: { bits?: number; asn1Curve?: string }): string {
+  if (cert.asn1Curve) return `ECDSA (${cert.asn1Curve})`
+  return cert.bits ? `RSA ${cert.bits}-bit` : 'Unknown'
+}
+
 async function resolveIp(domain: string): Promise<string> {
   try {
     const { address } = await dns.promises.lookup(domain, { family: 4 })
@@ -168,6 +173,7 @@ export function buildSslResult(cert: {
   issuer: { O?: string; CN?: string }
   subjectaltname?: string
   bits?: number
+  asn1Curve?: string
 }) {
   const now = Date.now()
   const validTo = new Date(cert.valid_to)
@@ -179,7 +185,7 @@ export function buildSslResult(cert: {
     issuer: s(cert.issuer.O as string | undefined) || s(cert.issuer.CN as string | undefined) || 'Unknown',
     validFrom: new Date(cert.valid_from).toISOString().split('T')[0],
     validTo: validTo.toISOString().split('T')[0],
-    algorithm: cert.bits ? `RSA ${cert.bits}-bit` : 'Unknown',
+    algorithm: certificateKeyAlgorithm(cert),
     sans: parseSans(cert.subjectaltname),
   }
 }
@@ -214,9 +220,7 @@ export async function checkSsl(domain: string, port = 443): Promise<SslResult> {
           buildChainCert(c, i === 0, i === rawChain.length - 1)
         )
 
-        const keyAlgo = (raw as tls.DetailedPeerCertificate & { asn1Curve?: string }).asn1Curve
-          ? `ECDSA (${(raw as tls.DetailedPeerCertificate & { asn1Curve?: string }).asn1Curve})`
-          : raw.bits ? `RSA ${raw.bits}-bit` : 'Unknown'
+        const keyAlgo = certificateKeyAlgorithm(raw as tls.DetailedPeerCertificate & { asn1Curve?: string })
 
         resolve({
           status: daysRemaining < 0 ? 'expired' : 'valid',

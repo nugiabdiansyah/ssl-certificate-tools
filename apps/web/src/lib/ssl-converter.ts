@@ -1,4 +1,5 @@
 import forge from 'node-forge'
+import { createPrivateKey } from 'crypto'
 
 export type CertFormat = 'pem' | 'der' | 'p7b' | 'pfx'
 
@@ -170,8 +171,8 @@ export function buildPemBundle(
 
   // Private key first (commercial.key)
   if (privateKeyPem?.trim()) {
-    const key = forge.pki.privateKeyFromPem(privateKeyPem.trim())
-    parts.push(forge.pki.privateKeyToPem(key).trim())
+    const key = createPrivateKey(privateKeyPem.trim())
+    parts.push(key.export({ type: 'pkcs8', format: 'pem' }).toString().trim())
   }
 
   // Leaf cert
@@ -197,13 +198,22 @@ export function convertPrivateKey(
   passphrase: string,
 ): ConvertResult {
   if (action === 'decrypt') {
-    const key = forge.pki.decryptRsaPrivateKey(keyPem, passphrase)
-    if (!key) throw new Error('Gagal decrypt key — passphrase salah atau format tidak didukung')
-    const pem = forge.pki.privateKeyToPem(key)
+    let pem: string
+    try {
+      const key = createPrivateKey({ key: keyPem, format: 'pem', passphrase })
+      pem = key.export({ type: 'pkcs8', format: 'pem' }).toString()
+    } catch {
+      throw new Error('Gagal decrypt key — passphrase salah atau format tidak didukung')
+    }
     return { data: Buffer.from(pem, 'utf8'), filename: 'private.key', mimeType: 'application/x-pem-file' }
   } else {
-    const key = forge.pki.privateKeyFromPem(keyPem)
-    const pem = forge.pki.encryptRsaPrivateKey(key, passphrase, { algorithm: 'aes256' as unknown as forge.pki.EncryptionOptions['algorithm'] })
+    const key = createPrivateKey(keyPem)
+    const pem = key.export({
+      type: 'pkcs8',
+      format: 'pem',
+      cipher: 'aes-256-cbc',
+      passphrase,
+    }).toString()
     return { data: Buffer.from(pem, 'utf8'), filename: 'private_encrypted.key', mimeType: 'application/x-pem-file' }
   }
 }

@@ -81,7 +81,7 @@ pub fn run(
     println!(
         r#"  <Certificate certificateKeystoreFile="/opt/tomcat/conf/{}"
                certificateKeystorePassword="{}"
-               certificateKeystoreType="PKCS12" type="RSA" />"#,
+               certificateKeystoreType="PKCS12" />"#,
         out_path, passphrase
     );
 

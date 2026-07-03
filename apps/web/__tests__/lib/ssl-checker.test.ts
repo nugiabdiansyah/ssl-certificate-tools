@@ -24,4 +24,9 @@ describe('buildSslResult', () => {
     const result = buildSslResult({ valid_to: pastDate.toISOString(), valid_from: new Date().toISOString(), subject: { CN: 'test.com' }, issuer: { O: 'Test CA' }, subjectaltname: '', bits: 2048 })
     expect(result.status).toBe('expired')
   })
+  it('labels EC certificates without assuming RSA', () => {
+    const futureDate = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000)
+    const result = buildSslResult({ valid_to: futureDate.toISOString(), valid_from: new Date().toISOString(), subject: { CN: 'test.com' }, issuer: { O: 'Test CA' }, subjectaltname: '', asn1Curve: 'secp384r1' })
+    expect(result.algorithm).toBe('ECDSA (secp384r1)')
+  })
 })

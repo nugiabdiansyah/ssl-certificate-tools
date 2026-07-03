@@ -447,9 +447,9 @@ function BundleTab() {
       {/* Output structure preview */}
       <div className="bg-surface border border-border rounded-xl p-5 mb-5">
         <p className="text-muted text-xs font-semibold uppercase tracking-wider mb-3">Output Structure</p>
-        <CodeBlock>{`-----BEGIN RSA PRIVATE KEY-----   ← only if key is provided
+        <CodeBlock>{`-----BEGIN PRIVATE KEY-----       ← only if key is provided
 (commercial.key)
------END RSA PRIVATE KEY-----
+-----END PRIVATE KEY-----
 
 -----BEGIN CERTIFICATE-----
 (certificate.crt — leaf certificate)
@@ -578,8 +578,7 @@ function TomcatTab() {
   <SSLHostConfig>
     <Certificate certificateKeystoreFile="/opt/tomcat/conf/keystore.p12"
                  certificateKeystorePassword="${pass}"
-                 certificateKeystoreType="PKCS12"
-                 type="RSA" />
+                 certificateKeystoreType="PKCS12" />
   </SSLHostConfig>
 </Connector>`}</CodeBlock>
           </div>
@@ -617,8 +616,7 @@ function TomcatTab() {
            scheme="https" secure="true">
   <SSLHostConfig>
     <Certificate certificateKeystoreFile="/opt/tomcat/conf/keystore.jks"
-                 certificateKeystorePassword="${pass}"
-                 type="RSA" />
+                 certificateKeystorePassword="${pass}" />
   </SSLHostConfig>
 </Connector>`}</CodeBlock>
           </div>
