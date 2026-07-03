@@ -7,6 +7,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+- **CLI `create-csr`** — create a CSR with a generated private key or an uploaded private key
+  ```
+  ssl-tools create-csr --cn example.com --san example.com --san www.example.com
+  ssl-tools create-csr --cn example.com --key-algorithm rsa-4096 --encrypt-key --passphrase secret
+  ssl-tools create-csr --cn example.com --key private.key --csr-output request.csr
+  ```
+- **CLI release workflow** — manual `workflow_dispatch` release support with a version input, while keeping tag-based `v*` releases.
+
+### Changed
+- **CLI version** bumped to `0.2.0`.
+- **CLI `decode-csr` and `decode-cert`** now include `Domain Type` (`Wildcard`, `Single Domain`, `Multi Domain`, `Unknown`).
+
 ---
 
 ## [v1.0.2] — 2026-06-08

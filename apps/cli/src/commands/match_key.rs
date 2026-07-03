@@ -1,8 +1,8 @@
+use crate::output;
 use anyhow::{Context, Result};
 use openssl::pkey::PKey;
 use openssl::x509::X509;
 use serde::Serialize;
-use crate::output;
 
 #[derive(Serialize)]
 pub struct MatchResult {
@@ -13,20 +13,21 @@ pub struct MatchResult {
 }
 
 pub fn run(cert_file: &str, key_file: &str, json: bool) -> Result<()> {
-    let cert_pem = std::fs::read(cert_file)
-        .with_context(|| format!("Cannot read cert: {}", cert_file))?;
-    let key_pem = std::fs::read(key_file)
-        .with_context(|| format!("Cannot read key: {}", key_file))?;
+    let cert_pem =
+        std::fs::read(cert_file).with_context(|| format!("Cannot read cert: {}", cert_file))?;
+    let key_pem =
+        std::fs::read(key_file).with_context(|| format!("Cannot read key: {}", key_file))?;
 
-    let cert = X509::from_pem(&cert_pem).or_else(|_| X509::from_der(&cert_pem))
+    let cert = X509::from_pem(&cert_pem)
+        .or_else(|_| X509::from_der(&cert_pem))
         .with_context(|| "Invalid certificate format")?;
-    let key = PKey::private_key_from_pem(&key_pem)
-        .with_context(|| "Invalid private key format")?;
+    let key = PKey::private_key_from_pem(&key_pem).with_context(|| "Invalid private key format")?;
 
     let cert_pub = cert.public_key()?;
     let is_match = cert_pub.public_eq(&key);
 
-    let cn = cert.subject_name()
+    let cn = cert
+        .subject_name()
         .entries_by_nid(openssl::nid::Nid::COMMONNAME)
         .next()
         .and_then(|e| e.data().as_utf8().ok())

@@ -143,6 +143,18 @@ ssl-tools decode-csr request.csr
 ssl-tools decode-csr request.csr --json
 ```
 
+#### `ssl-tools create-csr` — CSR Creator
+```bash
+# Default: ECDSA P-384 private key + CSR
+ssl-tools create-csr --cn example.com --san example.com --san www.example.com
+
+# Generate RSA 4096 and encrypt the private key
+ssl-tools create-csr --cn example.com --key-algorithm rsa-4096 --encrypt-key --passphrase secret
+
+# Create CSR from an existing private key
+ssl-tools create-csr --cn example.com --key private.key --csr-output request.csr
+```
+
 #### `ssl-tools match` — Certificate Key Matcher
 ```bash
 ssl-tools match certificate.crt private.key

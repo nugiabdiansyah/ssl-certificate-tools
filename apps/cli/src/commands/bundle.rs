@@ -42,8 +42,8 @@ pub fn run(
 }
 
 fn read_pem(path: &str) -> Result<String> {
-    let content = std::fs::read_to_string(path)
-        .with_context(|| format!("Cannot read: {}", path))?;
+    let content =
+        std::fs::read_to_string(path).with_context(|| format!("Cannot read: {}", path))?;
     if !content.contains("-----BEGIN") {
         bail!("{} does not appear to be a PEM file", path);
     }

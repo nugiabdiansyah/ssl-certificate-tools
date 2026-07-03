@@ -28,7 +28,8 @@ pub fn run(
     };
 
     // Load private key — try unencrypted first, then encrypted with the keystore passphrase
-    let key_bytes = std::fs::read(key_file).with_context(|| format!("Cannot read key: {}", key_file))?;
+    let key_bytes =
+        std::fs::read(key_file).with_context(|| format!("Cannot read key: {}", key_file))?;
     let pkey = PKey::private_key_from_pem(&key_bytes)
         .or_else(|_| PKey::private_key_from_pem_passphrase(&key_bytes, passphrase.as_bytes()))
         .with_context(|| "Cannot read private key — if encrypted, ensure --passphrase matches")?;
@@ -38,8 +39,12 @@ pub fn run(
         vec![b]
     } else {
         let mut v = Vec::new();
-        if let Some(i) = intermediate { v.push(i); }
-        if let Some(r) = rootca       { v.push(r); }
+        if let Some(i) = intermediate {
+            v.push(i);
+        }
+        if let Some(r) = rootca {
+            v.push(r);
+        }
         v
     };
 
@@ -56,10 +61,11 @@ pub fn run(
     if legacy {
         // Use legacy 3DES encryption for compatibility with old Java/Tomcat
         b.key_algorithm(Nid::PBE_WITHSHA1AND3_KEY_TRIPLEDES_CBC)
-         .cert_algorithm(Nid::PBE_WITHSHA1AND40BITRC2_CBC)
-         .mac_iter(2048);
+            .cert_algorithm(Nid::PBE_WITHSHA1AND40BITRC2_CBC)
+            .mac_iter(2048);
     }
-    let p12 = b.build2(passphrase)
+    let p12 = b
+        .build2(passphrase)
         .with_context(|| "Failed to build PKCS#12 keystore")?;
 
     let der = p12.to_der()?;
@@ -68,7 +74,10 @@ pub fn run(
 
     crate::output::print_status_ok(&format!("Keystore saved to: {}", out_path));
     println!();
-    println!("{}", colored::Colorize::dimmed("Tomcat server.xml snippet (PKCS12, recommended):"));
+    println!(
+        "{}",
+        colored::Colorize::dimmed("Tomcat server.xml snippet (PKCS12, recommended):")
+    );
     println!(
         r#"  <Certificate certificateKeystoreFile="/opt/tomcat/conf/{}"
                certificateKeystorePassword="{}"
@@ -82,7 +91,8 @@ pub fn run(
 fn load_certs(path: &str) -> Result<Vec<X509>> {
     let bytes = std::fs::read(path).with_context(|| format!("Cannot read: {}", path))?;
     if bytes.starts_with(b"-----") {
-        X509::stack_from_pem(&bytes).with_context(|| format!("Failed to parse PEM certs from {}", path))
+        X509::stack_from_pem(&bytes)
+            .with_context(|| format!("Failed to parse PEM certs from {}", path))
     } else {
         let c = X509::from_der(&bytes)?;
         Ok(vec![c])

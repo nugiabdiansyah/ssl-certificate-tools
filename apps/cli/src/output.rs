@@ -6,7 +6,9 @@ pub fn print_field(label: &str, value: &str) {
 }
 
 pub fn print_list(label: &str, values: &[String]) {
-    if values.is_empty() { return; }
+    if values.is_empty() {
+        return;
+    }
     println!("{}: {}", label.dimmed(), values.join(", ").white());
 }
 

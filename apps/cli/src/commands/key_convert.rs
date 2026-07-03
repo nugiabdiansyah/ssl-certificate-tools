@@ -38,7 +38,10 @@ pub fn run(
     if decrypt {
         crate::output::print_status_ok(&format!("Passphrase removed. Saved to: {}", out_path));
     } else {
-        crate::output::print_status_ok(&format!("Key encrypted (AES-256-CBC). Saved to: {}", out_path));
+        crate::output::print_status_ok(&format!(
+            "Key encrypted (AES-256-CBC). Saved to: {}",
+            out_path
+        ));
     }
 
     Ok(())

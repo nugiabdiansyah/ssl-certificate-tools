@@ -1,5 +1,5 @@
-use clap::{Parser, Subcommand};
 use anyhow::Result;
+use clap::{Parser, Subcommand};
 
 mod commands;
 mod output;
@@ -24,6 +24,53 @@ enum Commands {
     /// Decode a CSR file
     DecodeCsr {
         file: String,
+        #[arg(long)]
+        json: bool,
+    },
+    /// Create a CSR with a generated private key or an existing private key
+    CreateCsr {
+        /// Certificate common name (CN), e.g. example.com
+        #[arg(long, alias = "common-name")]
+        cn: String,
+        /// Subject Alternative Name DNS entry. Repeat or pass comma-separated values.
+        #[arg(long = "san", value_delimiter = ',')]
+        sans: Vec<String>,
+        /// Subject organization name (O)
+        #[arg(long)]
+        organization: Option<String>,
+        /// Subject organizational unit (OU)
+        #[arg(long = "organizational-unit")]
+        organizational_unit: Option<String>,
+        /// Subject country code (C), e.g. ID or US
+        #[arg(long)]
+        country: Option<String>,
+        /// Subject state or province (ST)
+        #[arg(long)]
+        state: Option<String>,
+        /// Subject locality or city (L)
+        #[arg(long)]
+        locality: Option<String>,
+        /// Subject email address
+        #[arg(long)]
+        email: Option<String>,
+        /// Key algorithm for generated private keys
+        #[arg(long, default_value = "ecdsa-p384")]
+        key_algorithm: String,
+        /// Existing private key PEM to use instead of generating a new key
+        #[arg(long)]
+        key: Option<String>,
+        /// Encrypt generated private key with AES-256-CBC
+        #[arg(long)]
+        encrypt_key: bool,
+        /// Password for encrypted generated keys or uploaded encrypted keys
+        #[arg(long)]
+        passphrase: Option<String>,
+        /// CSR output file
+        #[arg(long = "csr-output", default_value = "certificate.csr")]
+        csr_output: String,
+        /// Generated private key output file
+        #[arg(long = "key-output", default_value = "private.key")]
+        key_output: String,
         #[arg(long)]
         json: bool,
     },
@@ -137,23 +184,108 @@ enum Commands {
 async fn main() -> Result<()> {
     let cli = Cli::parse();
     match cli.command {
-        Commands::Check { domain, port, json } =>
-            commands::check::run(&domain, port, json).await,
-        Commands::DecodeCsr { file, json } =>
-            commands::decode_csr::run(&file, json),
-        Commands::DecodeCert { file, json } =>
-            commands::decode_cert::run(&file, json),
-        Commands::Match { cert_file, key_file, json } =>
-            commands::match_key::run(&cert_file, &key_file, json),
-        Commands::Convert { file, to, key, passphrase, legacy, output } =>
-            commands::convert::run(&file, &to, key.as_deref(), passphrase.as_deref(), legacy, output.as_deref()),
-        Commands::Bundle { cert, bundle, intermediate, rootca, key, output } =>
-            commands::bundle::run(&cert, bundle.as_deref(), intermediate.as_deref(), rootca.as_deref(), key.as_deref(), output.as_deref()),
-        Commands::Tomcat { cert, bundle, intermediate, rootca, key, passphrase, legacy, output } =>
-            commands::tomcat::run(&cert, bundle.as_deref(), intermediate.as_deref(), rootca.as_deref(), &key, &passphrase, legacy, output.as_deref()),
-        Commands::Fingerprint { host, port, pbs, json } =>
-            commands::fingerprint::run(&host, port, pbs, json).await,
-        Commands::Key { file, decrypt, encrypt, passphrase, output } =>
-            commands::key_convert::run(&file, decrypt, encrypt, &passphrase, output.as_deref()),
+        Commands::Check { domain, port, json } => commands::check::run(&domain, port, json).await,
+        Commands::DecodeCsr { file, json } => commands::decode_csr::run(&file, json),
+        Commands::CreateCsr {
+            cn,
+            sans,
+            organization,
+            organizational_unit,
+            country,
+            state,
+            locality,
+            email,
+            key_algorithm,
+            key,
+            encrypt_key,
+            passphrase,
+            csr_output,
+            key_output,
+            json,
+        } => commands::create_csr::run(
+            &cn,
+            &sans,
+            organization.as_deref(),
+            organizational_unit.as_deref(),
+            country.as_deref(),
+            state.as_deref(),
+            locality.as_deref(),
+            email.as_deref(),
+            &key_algorithm,
+            key.as_deref(),
+            encrypt_key,
+            passphrase.as_deref(),
+            Some(&csr_output),
+            Some(&key_output),
+            json,
+        ),
+        Commands::DecodeCert { file, json } => commands::decode_cert::run(&file, json),
+        Commands::Match {
+            cert_file,
+            key_file,
+            json,
+        } => commands::match_key::run(&cert_file, &key_file, json),
+        Commands::Convert {
+            file,
+            to,
+            key,
+            passphrase,
+            legacy,
+            output,
+        } => commands::convert::run(
+            &file,
+            &to,
+            key.as_deref(),
+            passphrase.as_deref(),
+            legacy,
+            output.as_deref(),
+        ),
+        Commands::Bundle {
+            cert,
+            bundle,
+            intermediate,
+            rootca,
+            key,
+            output,
+        } => commands::bundle::run(
+            &cert,
+            bundle.as_deref(),
+            intermediate.as_deref(),
+            rootca.as_deref(),
+            key.as_deref(),
+            output.as_deref(),
+        ),
+        Commands::Tomcat {
+            cert,
+            bundle,
+            intermediate,
+            rootca,
+            key,
+            passphrase,
+            legacy,
+            output,
+        } => commands::tomcat::run(
+            &cert,
+            bundle.as_deref(),
+            intermediate.as_deref(),
+            rootca.as_deref(),
+            &key,
+            &passphrase,
+            legacy,
+            output.as_deref(),
+        ),
+        Commands::Fingerprint {
+            host,
+            port,
+            pbs,
+            json,
+        } => commands::fingerprint::run(&host, port, pbs, json).await,
+        Commands::Key {
+            file,
+            decrypt,
+            encrypt,
+            passphrase,
+            output,
+        } => commands::key_convert::run(&file, decrypt, encrypt, &passphrase, output.as_deref()),
     }
 }

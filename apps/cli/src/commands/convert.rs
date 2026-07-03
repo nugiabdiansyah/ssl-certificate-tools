@@ -14,8 +14,7 @@ pub fn run(
     legacy: bool,
     output_path: Option<&str>,
 ) -> Result<()> {
-    let input = std::fs::read(file)
-        .with_context(|| format!("Cannot read file: {}", file))?;
+    let input = std::fs::read(file).with_context(|| format!("Cannot read file: {}", file))?;
 
     let ext = Path::new(file)
         .extension()
@@ -24,7 +23,8 @@ pub fn run(
         .unwrap_or_default();
 
     // Detect if input is P7B
-    let is_p7b = ext == "p7b" || ext == "p7c"
+    let is_p7b = ext == "p7b"
+        || ext == "p7c"
         || input.starts_with(b"-----BEGIN PKCS7")
         || input.starts_with(b"-----BEGIN PKCS #7");
 
@@ -65,12 +65,15 @@ pub fn run(
             b.name("certificate").pkey(&key).cert(&certs[0]);
             if legacy {
                 b.key_algorithm(Nid::PBE_WITHSHA1AND3_KEY_TRIPLEDES_CBC)
-                 .cert_algorithm(Nid::PBE_WITHSHA1AND40BITRC2_CBC)
-                 .mac_iter(2048);
+                    .cert_algorithm(Nid::PBE_WITHSHA1AND40BITRC2_CBC)
+                    .mac_iter(2048);
             }
             b.build2(pass)?.to_der()?
         }
-        _ => bail!("Unsupported target format: '{}'. Choose: pem, der, pfx.", to),
+        _ => bail!(
+            "Unsupported target format: '{}'. Choose: pem, der, pfx.",
+            to
+        ),
     };
 
     let to_lower = to.to_lowercase();
@@ -79,7 +82,10 @@ pub fn run(
         other => other,
     };
     let out_path = output_path.map(|s| s.to_string()).unwrap_or_else(|| {
-        let stem = Path::new(file).file_stem().and_then(|s| s.to_str()).unwrap_or("certificate");
+        let stem = Path::new(file)
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or("certificate");
         format!("{}.{}", stem, ext_out)
     });
 

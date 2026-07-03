@@ -52,6 +52,15 @@ const commands = [
     ],
   },
   {
+    title: 'CSR Creator',
+    description: 'Create a CSR with a generated private key or an uploaded private key.',
+    examples: [
+      'ssl-tools create-csr --cn example.com --san example.com --san www.example.com',
+      'ssl-tools create-csr --cn example.com --key-algorithm rsa-4096 --encrypt-key --passphrase secret',
+      'ssl-tools create-csr --cn example.com --key private.key --csr-output request.csr',
+    ],
+  },
+  {
     title: 'Certificate Decoder',
     description: 'Parse an X.509 certificate (PEM or DER).',
     examples: [

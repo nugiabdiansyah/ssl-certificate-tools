@@ -420,9 +420,6 @@ function BundleTab() {
   }
 
   const isSplit = chain.chainMode === 'split'
-  const chainLabel = isSplit
-    ? [chain.intermediateFile?.name, chain.rootcaFile?.name].filter(Boolean).join(' + ')
-    : chain.bundleFile?.name
 
   return (
     <>
