@@ -4,6 +4,7 @@ const tools = [
   { icon: '🔍', title: 'SSL Checker',           description: 'Check SSL certificate status and details for any live domain.', href: '/ssl-checker' },
   { icon: '🔏', title: 'Fingerprint',            description: 'Get SHA-1, SHA-256, and Proxmox/PBS fingerprint — live check or file upload.', href: '/fingerprint' },
   { icon: '📄', title: 'CSR Decoder',            description: 'Decode a Certificate Signing Request and inspect all its fields.', href: '/csr-decoder' },
+  { icon: '🧾', title: 'CSR Creator',            description: 'Create a CSR with a new private key or an uploaded private key.', href: '/csr-creator' },
   { icon: '🔐', title: 'Certificate Decoder',    description: 'Parse an X.509 certificate (PEM/DER) and display all details.', href: '/cert-decoder' },
   { icon: '🔑', title: 'Key Matcher',            description: 'Verify whether a private key matches a given certificate.', href: '/key-matcher' },
   { icon: '🔄', title: 'SSL Converter',          description: 'Convert certificate formats: PEM ↔ DER ↔ PFX/P12 ↔ P7B.', href: '/ssl-converter' },
@@ -34,7 +35,7 @@ export default function Home() {
         {tools.slice(0, 4).map((tool) => (
           <ToolCard key={tool.href} {...tool} />
         ))}
-        <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
           {tools.slice(4).map((tool) => (
             <ToolCard key={tool.href} {...tool} />
           ))}

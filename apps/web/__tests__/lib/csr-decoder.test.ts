@@ -13,4 +13,8 @@ describe('decodeCsr', () => {
   it('throws on invalid PEM', () => {
     expect(() => decodeCsr('not a valid csr')).toThrow()
   })
+  it('classifies a CSR with one DNS name as single domain', () => {
+    const result = decodeCsr(fixtures.csrPem)
+    expect(result.domainType).toBe('Single Domain')
+  })
 })

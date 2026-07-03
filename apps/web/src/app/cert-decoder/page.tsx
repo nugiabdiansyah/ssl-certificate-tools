@@ -29,6 +29,7 @@ export default function CertDecoderPage() {
         'Serial Number': data.serialNumber,
         'Valid From': data.validFrom,
         'Valid To': `${data.validTo} (${data.daysRemaining} days)`,
+        'Domain Type': data.domainType,
         'Public Key': `${data.publicKey.algorithm} ${data.publicKey.bits}-bit`,
         'Signature Algorithm': data.signatureAlgorithm,
         'SANs': data.sans,

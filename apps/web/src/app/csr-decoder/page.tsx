@@ -25,7 +25,8 @@ export default function CsrDecoderPage() {
       'State': data.state,
       'Locality': data.locality,
       'Email': data.email,
-      'Public Key': `RSA ${data.publicKeyBits}-bit`,
+      'Domain Type': data.domainType,
+      'Public Key': `${data.publicKeyAlgorithm} ${data.publicKeyBits}-bit`,
       'Signature Algorithm': data.signatureAlgorithm,
       'SANs': data.sans,
     })

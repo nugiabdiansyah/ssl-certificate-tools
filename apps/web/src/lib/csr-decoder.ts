@@ -1,4 +1,5 @@
 import forge from 'node-forge'
+import { classifyDomainType, type DomainType } from './domain-classifier'
 
 export interface CsrInfo {
   commonName: string
@@ -12,6 +13,7 @@ export interface CsrInfo {
   publicKeyBits: number
   signatureAlgorithm: string
   sans: string[]
+  domainType: DomainType
 }
 
 function getAttr(csr: ReturnType<typeof forge.pki.certificationRequestFromPem>, name: string): string {
@@ -47,5 +49,6 @@ export function decodeCsr(pem: string): CsrInfo {
     publicKeyBits: bits,
     signatureAlgorithm: csr.md?.algorithm ?? 'sha256WithRSAEncryption',
     sans,
+    domainType: classifyDomainType(getAttr(csr, 'CN'), sans),
   }
 }
