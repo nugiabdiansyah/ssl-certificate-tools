@@ -54,6 +54,56 @@ fn create_csr_generates_default_ecdsa_key_and_csr() {
 }
 
 #[test]
+fn create_csr_accepts_country_code_and_ou_for_principal_subject() {
+    let dir = tempdir().unwrap();
+    let csr_path = dir.path().join("principal.csr");
+    let key_path = dir.path().join("principal.key");
+
+    let output = Command::new(ssl_tools())
+        .args([
+            "create-csr",
+            "--cn",
+            "principal.example.com",
+            "--country-code",
+            "ID",
+            "--organizational-unit",
+            "IT",
+            "--csr-output",
+            csr_path.to_str().unwrap(),
+            "--key-output",
+            key_path.to_str().unwrap(),
+        ])
+        .output()
+        .unwrap();
+
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+
+    let req = openssl::x509::X509Req::from_pem(&fs::read(&csr_path).unwrap()).unwrap();
+    let subject = req.subject_name();
+    let country = subject
+        .entries_by_nid(openssl::nid::Nid::COUNTRYNAME)
+        .next()
+        .unwrap()
+        .data()
+        .as_utf8()
+        .unwrap();
+    let ou = subject
+        .entries_by_nid(openssl::nid::Nid::ORGANIZATIONALUNITNAME)
+        .next()
+        .unwrap()
+        .data()
+        .as_utf8()
+        .unwrap();
+
+    assert_eq!(country.to_string(), "ID");
+    assert_eq!(ou.to_string(), "IT");
+}
+
+#[test]
 fn create_csr_uses_uploaded_private_key_without_writing_new_key() {
     let dir = tempdir().unwrap();
     let csr_path = dir.path().join("uploaded.csr");

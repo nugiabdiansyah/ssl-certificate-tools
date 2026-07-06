@@ -42,7 +42,7 @@ enum Commands {
         #[arg(long = "organizational-unit")]
         organizational_unit: Option<String>,
         /// Subject country code (C), e.g. ID or US
-        #[arg(long)]
+        #[arg(long, alias = "country-code")]
         country: Option<String>,
         /// Subject state or province (ST)
         #[arg(long)]

@@ -197,12 +197,12 @@ export default function CsrCreatorPage() {
               className="w-full bg-bg border border-border rounded-lg px-4 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-primary" />
           </div>
           <div>
-            <label className="text-slate-300 text-sm font-medium block mb-1.5">Organizational Unit</label>
+            <label className="text-slate-300 text-sm font-medium block mb-1.5">Organizational Unit (OU)</label>
             <input value={organizationalUnit} onChange={e => setOrganizationalUnit(e.target.value)} placeholder="IT"
               className="w-full bg-bg border border-border rounded-lg px-4 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-primary" />
           </div>
           <div>
-            <label className="text-slate-300 text-sm font-medium block mb-1.5">Country</label>
+            <label className="text-slate-300 text-sm font-medium block mb-1.5">Country Code (C)</label>
             <input value={country} onChange={e => setCountry(e.target.value.toUpperCase().slice(0, 2))} placeholder="ID" maxLength={2}
               className="w-full bg-bg border border-border rounded-lg px-4 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-primary" />
           </div>
