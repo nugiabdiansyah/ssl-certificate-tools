@@ -7,18 +7,29 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+---
+
+## [v1.0.6] — 2026-07-23
+
 ### Added
-- **CLI `create-csr`** — create a CSR with a generated private key or an uploaded private key
-  ```
-  ssl-tools create-csr --cn example.com --san example.com --san www.example.com
-  ssl-tools create-csr --cn example.com --key-algorithm rsa-4096 --encrypt-key --passphrase secret
-  ssl-tools create-csr --cn example.com --key private.key --csr-output request.csr
-  ```
-- **CLI release workflow** — manual `workflow_dispatch` release support with a version input, while keeping tag-based `v*` releases.
+- **crates.io packaging** — added crate metadata, a CLI-specific README, and MIT license text for the first manual publication.
+
+### Changed
+- **CLI version** bumped to `1.0.6`.
+- **CLI `create-csr`** accepts `--country-code` as an alias for `--country`.
+
+---
+
+## [v1.0.5] — 2026-07-03
+
+### Added
+- **CLI `create-csr`** — create a CSR with a generated ECDSA/RSA private key or an existing private key.
+- **CLI release workflow** — manual `workflow_dispatch` release support while retaining tag-based releases.
 
 ### Changed
 - **CLI version** bumped to `1.0.5`.
 - **CLI `decode-csr` and `decode-cert`** now include `Domain Type` (`Wildcard`, `Single Domain`, `Multi Domain`, `Unknown`).
+- **CSR and key handling** supports ECDSA inputs.
 
 ---
 
@@ -110,6 +121,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Dockerfile** for self-hosted web deployment
 - **`/cli` page** — install instructions, platform download links, command reference
 
+[v1.0.6]: https://github.com/nugiabdiansyah/ssl-certificate-tools/compare/v1.0.5...v1.0.6
+[v1.0.5]: https://github.com/nugiabdiansyah/ssl-certificate-tools/compare/v1.0.4...v1.0.5
 [v1.0.2]: https://github.com/nugiabdiansyah/ssl-certificate-tools/compare/v1.0.1...v1.0.2
 [v1.0.1]: https://github.com/nugiabdiansyah/ssl-certificate-tools/compare/v1.0.0...v1.0.1
 [v1.0.0]: https://github.com/nugiabdiansyah/ssl-certificate-tools/releases/tag/v1.0.0

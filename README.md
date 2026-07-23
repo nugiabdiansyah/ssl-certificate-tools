@@ -286,11 +286,30 @@ ssl-certificate-tools/
     └── cli-release.yml       # Build + publish binaries on git tag push
 ```
 
-**Release a new CLI version:**
+**First crates.io release (`v1.0.6`):**
 ```bash
-git tag v1.x.x && git push origin v1.x.x
-# GitHub Actions builds all 4 platform binaries and publishes the release
+cd apps/cli
+cargo test --locked
+cargo publish --dry-run --locked
+cd ../..
+
+git add apps/cli/Cargo.toml apps/cli/Cargo.lock apps/cli/README.md \
+  apps/cli/LICENSE LICENSE README.md CHANGELOG.md
+git commit -m "chore: prepare ssl-tools v1.0.6"
+git push origin main
+git tag v1.0.6
+git push origin v1.0.6
+
+cd apps/cli
+cargo publish --locked
 ```
+
+Verify the crate at <https://crates.io/crates/ssl-tools>. Only after it is
+available should the CLI page warning be removed and future crates.io
+publishing be automated.
+
+The `v1.0.6` tag triggers GitHub Actions to build four platform binaries and
+publish the GitHub Release from the same commit.
 
 ---
 
