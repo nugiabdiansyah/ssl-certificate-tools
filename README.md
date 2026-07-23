@@ -55,6 +55,14 @@ No data is stored or logged. All processing is done server-side (web) or locally
 
 ### Installation
 
+#### Install via Cargo
+
+Requires a [Rust toolchain](https://rustup.rs):
+
+```bash
+cargo install ssl-tools
+```
+
 #### Download binary (recommended)
 
 Download the prebuilt binary for your platform from the [Releases page](https://github.com/nugiabdiansyah/ssl-certificate-tools/releases/latest):
@@ -286,30 +294,41 @@ ssl-certificate-tools/
     └── cli-release.yml       # Build + publish binaries on git tag push
 ```
 
-**First crates.io release (`v1.0.6`):**
+**Finalize the first crates.io release (`v1.0.6`):**
+
+Version `1.0.6` was published from commit `5b61052`. Keep the GitHub tag
+anchored to that exact source commit:
+
+```bash
+git push origin main
+git tag v1.0.6 5b61052
+git push origin v1.0.6
+```
+
+The tag triggers the original `v1.0.6` workflow to build four platform
+binaries and publish the GitHub Release.
+
+**Release future CLI versions:**
+
+Before pushing the next version tag, configure the GitHub repository secret
+`CARGO_REGISTRY_TOKEN` with a crates.io API token. Then bump the Cargo version
+and changelog, commit and push those changes, and create the matching tag:
+
 ```bash
 cd apps/cli
 cargo test --locked
 cargo publish --dry-run --locked
 cd ../..
 
-git add apps/cli/Cargo.toml apps/cli/Cargo.lock apps/cli/README.md \
-  apps/cli/LICENSE LICENSE README.md CHANGELOG.md
-git commit -m "chore: prepare ssl-tools v1.0.6"
 git push origin main
-git tag v1.0.6
-git push origin v1.0.6
-
-cd apps/cli
-cargo publish --locked
+git tag v1.x.x
+git push origin v1.x.x
 ```
 
-Verify the crate at <https://crates.io/crates/ssl-tools>. Only after it is
-available should the CLI page warning be removed and future crates.io
-publishing be automated.
-
-The `v1.0.6` tag triggers GitHub Actions to build four platform binaries and
-publish the GitHub Release from the same commit.
+For tag pushes after `v1.0.6`, GitHub Actions verifies the version, runs the
+tests, publishes the crate, builds the platform binaries, and creates the
+GitHub Release from the same commit. Manual workflow runs build only the
+GitHub binary release and never publish a crate.
 
 ---
 

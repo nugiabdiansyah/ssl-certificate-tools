@@ -147,7 +147,16 @@ export default function CliPage() {
             <span className="text-subtle select-none">$ </span>cargo install ssl-tools
           </pre>
           <p className="text-muted text-xs mt-2">
-            ⚠️ Not yet published to crates.io — use the <span className="text-primary-light">Download Binary</span> section below for now.
+            View package details and release history on{' '}
+            <a
+              href="https://crates.io/crates/ssl-tools"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary-light hover:underline"
+            >
+              crates.io
+            </a>
+            .
           </p>
         </div>
       </section>

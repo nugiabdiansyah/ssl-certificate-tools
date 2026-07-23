@@ -14,7 +14,19 @@ permissions:
   contents: write
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Test
+        run: cargo test --locked
+        working-directory: apps/cli
+
   build:
+    needs: test
     strategy:
       matrix:
         include:
@@ -57,8 +69,31 @@ jobs:
           name: ${{ matrix.asset }}
           path: ${{ matrix.asset }}
 
+  publish_crate:
+    if: github.event_name == 'push'
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Verify tag matches crate version
+        shell: bash
+        working-directory: apps/cli
+        run: |
+          crate_version=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')
+          test "v${crate_version}" = "${GITHUB_REF_NAME}"
+
+      - name: Publish crate
+        run: cargo publish --locked
+        working-directory: apps/cli
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
   release:
-    needs: build
+    if: ${{ always() && needs.build.result == 'success' && (github.event_name == 'workflow_dispatch' || needs.publish_crate.result == 'success') }}
+    needs: [build, publish_crate]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
